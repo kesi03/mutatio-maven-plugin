@@ -5,7 +5,9 @@ import com.mockholm.config.Branch;
 import com.mockholm.config.BranchAction;
 import com.mockholm.config.BranchType;
 import com.mockholm.models.CommitDescription;
+import com.mockholm.models.Commons;
 import com.mockholm.models.ConventionalCommit;
+import com.mockholm.mojos.commons.BranchMojo;
 import com.mockholm.utils.CommitUtils;
 import com.mockholm.commands.GitCommand;
 import com.mockholm.utils.GitUtils;
@@ -33,80 +35,12 @@ public class FeatStartMojo extends AbstractMojo {
         @Parameter(property = "branch", name = "branch")
         private Branch branch = new Branch();
 
-        public void execute() throws MojoExecutionException, MojoFailureException {
-                getLog().info("currentBranch: " + GitUtils.getCurrentBranch());
-                getLog().info("Current version: " + project.getVersion());
 
-                SemanticVersion currentVersion = SemanticVersion.parse(project.getVersion());
-
-                // Use Optional to provide a default value if branch name is null or blank
-                String branchName = Optional.ofNullable(branch.getName())
-                                .filter(name -> !name.isBlank())
-                                .orElse("123456");
-
-                String branchFullname =BranchType.FEATURE.getValue()+"-"+branchName;
-
-                getLog().info("Branch: "+branchFullname);
-
-                String preRelease = String.format("%s-%s-%s",
-                                currentVersion.getPreRelease(),
-                                BranchType.FEATURE.getUppercaseValue(),
-                                branchName);
-
-                SemanticVersion featVersion = new SemanticVersion(
-                                currentVersion.getMajor(),
-                                currentVersion.getMinor(),
-                                currentVersion.getPatch(),
-                                preRelease,
-                                currentVersion.getBuild());
-
-
-                getLog().info("Feature version: " + featVersion.toString());
-
-                CommitDescription description = new CommitDescription.Builder()
-                                .action(BranchAction.START)
-                                .branchName(branchName)
-                                .message("branch...")
-                                .build();
-
-                ConventionalCommit commit = new ConventionalCommit.Builder()
-                                .type(BranchType.FEATURE)
-                                .scope(branchName)
-                                .description(description.toString())
-                                .isBreaking(false)
-                                .body("")
-                                .footer("")
-                                .build();
-
-                String commitMessage = CommitUtils.format(commit);
-
-                getLog().info("Commit: " + commitMessage);
-
-                try {
-                        PomCommand pomCommand = new PomCommand(baseDir, getLog());
-                        new GitCommand(getLog())
-                                .changeBranch(BranchType.DEVELOPMENT.getValue())
-                                .changeBranch(BranchType.FEATURE.getValue()+"/"+branchName)
-                                .gitInfo()
-                                .runPomCommands(cmd -> {
-                                    try {
-                                        pomCommand
-                                                .setVersion(featVersion.toString())
-                                                .updatePomVersion()
-                                                .updateModules();
-                                    } catch (MojoExecutionException e) {
-                                        throw new RuntimeException(e);
-                                    }
-                                }, pomCommand)
-                                .addAllChanges()
-                                .commit(commitMessage)
-                                .gitInfo()
-                                        .close();
-
-                } catch (IOException e) {
-                        throw new RuntimeException(e);
-                }
-
+        public void execute() {
+                new BranchMojo(new Commons().
+                        withLog(getLog()).
+                        withBranch(branch).
+                        withProject(project).
+                        withBaseDir(baseDir)).executeStart(BranchType.FEATURE);
         }
-
 }
