@@ -27,14 +27,9 @@ import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
 import org.apache.maven.project.MavenProject;
 
-/**
- * Goal which touches a timestamp file.
- *
- * @goal touch
- * 
- * @phase mutatio-info
- */
-@Mojo(name = "mutatio-info", defaultPhase = LifecyclePhase.COMPILE)
+@Mojo(name = "mutatio-info", requiresDirectInvocation = true,
+requiresProject = true, aggregator = true
+)
 public class MutatioInfoMojo extends AbstractMojo
 {
     @Parameter(defaultValue = "${project}", required = true, readonly = true)

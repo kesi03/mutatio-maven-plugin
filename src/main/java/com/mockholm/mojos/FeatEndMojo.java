@@ -21,8 +21,9 @@ import org.apache.maven.project.MavenProject;
 
 import java.io.IOException;
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicReference;
 
-@Mojo(name = "feat-end", aggregator = true, defaultPhase = LifecyclePhase.INITIALIZE)
+@Mojo(name = "feat-end", aggregator = true, defaultPhase = LifecyclePhase.NONE)
 public class FeatEndMojo extends AbstractMojo {
 
         @Parameter(defaultValue = "${project}", required = true, readonly = true)
@@ -85,16 +86,34 @@ public class FeatEndMojo extends AbstractMojo {
 
                 try {
                         PomCommand pomCommand = new PomCommand(baseDir, getLog());
+                        AtomicReference<String> developmentVersion= new AtomicReference<>("");
                         new GitCommand(getLog())
                                 .changeBranch(BranchType.DEVELOPMENT.getValue())
                                 .runPomCommands(cmd -> {
-                                        PomUtils.getVersion(baseDir);
+                                        developmentVersion.set(PomUtils.getVersion(baseDir));
+                                        getLog().info("version: "+developmentVersion);
+
                                 }, pomCommand)
                                 .changeBranch(BranchType.FEATURE.getValue()+"/"+branchName)
                                 .gitInfo()
                                 .runPomCommands(cmd -> {
-                                        PomUtils.getVersion(baseDir);
+                                        getLog().info("dev: "+developmentVersion);
+                                        getLog().info("version: "+PomUtils.getVersion(baseDir));
                                 }, pomCommand)
+                                .mergeBranches(BranchType.FEATURE.getValue()+"/"+branchName,BranchType.DEVELOPMENT.getValue())
+                                .changeBranch(BranchType.DEVELOPMENT.getValue())
+                                .runPomCommands(cmd -> {
+                                        try {
+                                                pomCommand
+                                                        .setVersion(developmentVersion.get())
+                                                        .updatePomVersion()
+                                                        .updateModules();
+                                        } catch (MojoExecutionException e) {
+                                                throw new RuntimeException(e);
+                                        }
+                                }, pomCommand)
+                                .addAllChanges()
+                                .commit(commitMessage)
                                 .gitInfo()
                                         .close();
 

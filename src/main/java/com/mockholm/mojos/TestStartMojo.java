@@ -1,5 +1,6 @@
 package com.mockholm.mojos;
 
+import com.mockholm.commands.GitCommand;
 import com.mockholm.commands.PomCommand;
 import com.mockholm.config.Branch;
 import com.mockholm.config.BranchAction;
@@ -7,7 +8,6 @@ import com.mockholm.config.BranchType;
 import com.mockholm.models.CommitDescription;
 import com.mockholm.models.ConventionalCommit;
 import com.mockholm.utils.CommitUtils;
-import com.mockholm.commands.GitCommand;
 import com.mockholm.utils.GitUtils;
 import com.mockholm.utils.SemanticVersion;
 import org.apache.maven.plugin.AbstractMojo;
@@ -21,8 +21,8 @@ import org.apache.maven.project.MavenProject;
 import java.io.IOException;
 import java.util.Optional;
 
-@Mojo(name = "feat-start", aggregator = true, defaultPhase = LifecyclePhase.NONE)
-public class FeatStartMojo extends AbstractMojo {
+@Mojo(name = "test-start", aggregator = true, defaultPhase = LifecyclePhase.NONE)
+public class TestStartMojo extends AbstractMojo {
 
         @Parameter(defaultValue = "${project}", required = true, readonly = true)
         private MavenProject project;
@@ -44,13 +44,13 @@ public class FeatStartMojo extends AbstractMojo {
                                 .filter(name -> !name.isBlank())
                                 .orElse("123456");
 
-                String branchFullname =BranchType.FEATURE.getValue()+"-"+branchName;
+                String branchFullname =BranchType.TEST.getValue()+"-"+branchName;
 
                 getLog().info("Branch: "+branchFullname);
 
                 String preRelease = String.format("%s-%s-%s",
                                 currentVersion.getPreRelease(),
-                                BranchType.FEATURE.getUppercaseValue(),
+                                BranchType.TEST.getUppercaseValue(),
                                 branchName);
 
                 SemanticVersion featVersion = new SemanticVersion(
@@ -61,7 +61,7 @@ public class FeatStartMojo extends AbstractMojo {
                                 currentVersion.getBuild());
 
 
-                getLog().info("Feature version: " + featVersion.toString());
+                getLog().info("TEST version: " + featVersion.toString());
 
                 CommitDescription description = new CommitDescription.Builder()
                                 .action(BranchAction.START)
@@ -70,7 +70,7 @@ public class FeatStartMojo extends AbstractMojo {
                                 .build();
 
                 ConventionalCommit commit = new ConventionalCommit.Builder()
-                                .type(BranchType.FEATURE)
+                                .type(BranchType.TEST)
                                 .scope(branchName)
                                 .description(description.toString())
                                 .isBreaking(false)
@@ -86,7 +86,7 @@ public class FeatStartMojo extends AbstractMojo {
                         PomCommand pomCommand = new PomCommand(baseDir, getLog());
                         new GitCommand(getLog())
                                 .changeBranch(BranchType.DEVELOPMENT.getValue())
-                                .changeBranch(BranchType.FEATURE.getValue()+"/"+branchName)
+                                .changeBranch(BranchType.TEST.getValue()+"/"+branchName)
                                 .gitInfo()
                                 .runPomCommands(cmd -> {
                                     try {
