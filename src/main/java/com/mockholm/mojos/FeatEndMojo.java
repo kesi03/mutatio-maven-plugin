@@ -1,5 +1,6 @@
 package com.mockholm.mojos;
 
+import com.mockholm.commands.GitCommand;
 import com.mockholm.commands.PomCommand;
 import com.mockholm.config.Branch;
 import com.mockholm.config.BranchAction;
@@ -7,8 +8,8 @@ import com.mockholm.config.BranchType;
 import com.mockholm.models.CommitDescription;
 import com.mockholm.models.ConventionalCommit;
 import com.mockholm.utils.CommitUtils;
-import com.mockholm.commands.GitCommand;
 import com.mockholm.utils.GitUtils;
+import com.mockholm.utils.PomUtils;
 import com.mockholm.utils.SemanticVersion;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
@@ -21,8 +22,8 @@ import org.apache.maven.project.MavenProject;
 import java.io.IOException;
 import java.util.Optional;
 
-@Mojo(name = "feat-start", aggregator = true, defaultPhase = LifecyclePhase.INITIALIZE)
-public class FeatStartMojo extends AbstractMojo {
+@Mojo(name = "feat-end", aggregator = true, defaultPhase = LifecyclePhase.INITIALIZE)
+public class FeatEndMojo extends AbstractMojo {
 
         @Parameter(defaultValue = "${project}", required = true, readonly = true)
         private MavenProject project;
@@ -64,7 +65,7 @@ public class FeatStartMojo extends AbstractMojo {
                 getLog().info("Feature version: " + featVersion.toString());
 
                 CommitDescription description = new CommitDescription.Builder()
-                                .action(BranchAction.START)
+                                .action(BranchAction.FINISH)
                                 .branchName(branchName)
                                 .message("branch...")
                                 .build();
@@ -86,20 +87,14 @@ public class FeatStartMojo extends AbstractMojo {
                         PomCommand pomCommand = new PomCommand(baseDir, getLog());
                         new GitCommand(getLog())
                                 .changeBranch(BranchType.DEVELOPMENT.getValue())
+                                .runPomCommands(cmd -> {
+                                        PomUtils.getVersion(baseDir);
+                                }, pomCommand)
                                 .changeBranch(BranchType.FEATURE.getValue()+"/"+branchName)
                                 .gitInfo()
                                 .runPomCommands(cmd -> {
-                                    try {
-                                        pomCommand
-                                                .setVersion(featVersion.toString())
-                                                .updatePomVersion()
-                                                .updateModules();
-                                    } catch (MojoExecutionException e) {
-                                        throw new RuntimeException(e);
-                                    }
+                                        PomUtils.getVersion(baseDir);
                                 }, pomCommand)
-                                .addAllChanges()
-                                .commit(commitMessage)
                                 .gitInfo()
                                         .close();
 

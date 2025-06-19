@@ -1,4 +1,4 @@
-package com.mockholm;
+package com.mockholm.mojos;
 
 /*
  * Copyright 2001-2005 The Apache Software Foundation.
@@ -18,7 +18,6 @@ package com.mockholm;
 
 import com.mockholm.config.ReleaseType;
 import com.mockholm.config.VersionIdentifier;
-import com.mockholm.mojos.FeatStartMojo;
 import com.mockholm.utils.GitUtils;
 import com.mockholm.utils.SemanticVersion;
 import org.apache.maven.plugin.AbstractMojo;
@@ -27,10 +26,6 @@ import org.apache.maven.plugins.annotations.LifecyclePhase;
 import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
 import org.apache.maven.project.MavenProject;
-import org.eclipse.jgit.api.Git;
-
-import java.io.File;
-import java.io.IOException;
 
 /**
  * Goal which touches a timestamp file.

@@ -88,4 +88,8 @@ public enum BranchType {
     public String getValue() {
         return value;
     }
+
+    public String getUppercaseValue() {
+        return value.toUpperCase();
+    }
 }

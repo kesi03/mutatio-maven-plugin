@@ -51,4 +51,9 @@ public class Branch {
     public void setBranchType(BranchType branchType) {
         this.branchType = branchType;
     }
+
+    public String getBranchFullName() {
+        return (branchType != null ? branchType.getValue() : "unknown") + "/" + (name != null ? name : "unnamed");
+    }
+
 }
