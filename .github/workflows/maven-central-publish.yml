@@ -29,10 +29,11 @@ jobs:
                 "password": "${{ secrets.OSSRH_PASSWORD }}"
               }
             ]
-
       - name: Import GPG key
         run: |
-          echo "${{ secrets.GPG_PRIVATE_KEY }}" | base64 --decode | gpg --batch --import
+          echo "$GPG_PRIVATE_KEY" | base64 --decode > private.key
+          gpg --batch --import private.key
+          rm private.key
         env:
           GPG_PRIVATE_KEY: ${{ secrets.GPG_PRIVATE_KEY }}
 
