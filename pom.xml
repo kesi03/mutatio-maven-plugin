@@ -19,6 +19,15 @@
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
   </properties>
 
+  <distributionManagement>
+    <repository>
+      <id>github</id>
+      <url>https://maven.pkg.github.com/kesi03/mutatio-maven-plugin</url>
+    </repository>
+  </distributionManagement>
+
+
+
   <dependencies>
     <dependency>
       <groupId>org.apache.maven</groupId>
