@@ -25,23 +25,28 @@ jobs:
             [
               {
                 "id": "central",
-                "username": "${{ secrets.OSSRH_USERNAME }}",
-                "password": "${{ secrets.OSSRH_PASSWORD }}"
+                "username": "${{ secrets.CENTRAL_USERNAME }}",
+                "password": "${{ secrets.CENTRAL_PASSWORD }}"
               }
             ]
-      - name: Import GPG key
+
+      - name: Import and trust GPG key
         run: |
           echo "$GPG_PRIVATE_KEY" | base64 --decode > private.key
           gpg --batch --import private.key
-          rm private.key
+          KEY_ID=$(gpg --list-secret-keys --with-colons | grep '^sec' | cut -d: -f5)
+          echo "KEY_ID=$KEY_ID" >> $GITHUB_ENV
+          echo -e "5\ny\n" | gpg --command-fd 0 --edit-key "$KEY_ID" trust quit
         env:
           GPG_PRIVATE_KEY: ${{ secrets.GPG_PRIVATE_KEY }}
 
-      - name: List GPG keys
-        run: gpg --list-secret-keys --keyid-format LONG
+      - name: Set GPG_TTY
+        run: echo "GPG_TTY=$(tty)" >> $GITHUB_ENV
 
-      - name: Verify GPG key is usable
-        run: echo "test" | gpg --clearsign
+      - name: Test GPG signing works
+        run: echo "test" | gpg --batch --yes --pinentry-mode loopback --passphrase "$GPG_PASSPHRASE" --clearsign
+        env:
+          GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
 
       - name: Deploy to Maven Central
         run: mvn clean deploy -P central
