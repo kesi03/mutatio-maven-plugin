@@ -21,6 +21,15 @@
       <url>https://github.com/kesi03</url>
     </developer>
   </developers>
+  <distributionManagement>
+    <repository>
+      <id>github</id>
+      <name>GitHub Packages</name>
+      <url>https://maven.pkg.github.com/YOUR_USERNAME/YOUR_REPOSITORY</url>
+    </repository>
+  </distributionManagement>
+
+
   <licenses>
     <license>
       <name>The Apache License, Version 2.0</name>
