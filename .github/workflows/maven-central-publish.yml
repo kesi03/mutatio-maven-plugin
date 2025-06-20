@@ -40,11 +40,5 @@ jobs:
       - name: List GPG keys
         run: gpg --list-secret-keys --keyid-format LONG
 
-      - name: Trust GPG key
-        run: |
-          echo -e "5\ny\n" | gpg --command-fd 0 --edit-key "$GPG_KEY_ID" trust quit
-        env:
-          GPG_KEY_ID: ${{ secrets.GPG_KEY_ID }}
-
       - name: Deploy to Maven Central
         run: mvn clean deploy -P central -Dgpg.passphrase=${{ secrets.GPG_PASSPHRASE }} -Dgpg.gpg.keyname=${{ secrets.GPG_KEY_ID }}
