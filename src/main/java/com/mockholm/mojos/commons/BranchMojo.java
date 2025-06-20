@@ -112,9 +112,9 @@ public class BranchMojo {
                 .filter(name -> !name.isBlank())
                 .orElse("123456");
 
-        String branchFullname =branchType.getValue()+"-"+branchName;
+        String branchFullName =branchType.getValue()+"-"+branchName;
 
-        commons.getLog().info("Branch: "+branchFullname);
+        commons.getLog().info("Branch: "+branchFullName);
 
         String preRelease = String.format("%s-%s-%s",
                 currentVersion.getPreRelease(),
