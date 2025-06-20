@@ -21,6 +21,13 @@
       <url>https://github.com/kesi03</url>
     </developer>
   </developers>
+  <licenses>
+    <license>
+      <name>The Apache License, Version 2.0</name>
+      <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
+      <distribution>repo</distribution>
+    </license>
+  </licenses>
   <properties>
     <maven.compiler.source>11</maven.compiler.source>
     <maven.compiler.target>11</maven.compiler.target>
@@ -76,6 +83,11 @@
       <artifactId>annotations</artifactId>
       <version>13.0</version>
       <scope>compile</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.maven.plugins</groupId>
+      <artifactId>maven-gpg-plugin</artifactId>
+      <version>3.2.7</version>
     </dependency>
   </dependencies>
 
@@ -152,6 +164,31 @@
           </execution>
         </executions>
       </plugin>
+
+
+      <!-- Sign-->
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-gpg-plugin</artifactId>
+        <version>3.2.7</version>
+        <executions>
+          <execution>
+            <id>sign-artifacts</id>
+            <phase>verify</phase>
+            <goals>
+              <goal>sign</goal>
+            </goals>
+          </execution>
+        </executions>
+        <configuration>
+          <gpgArguments>
+            <arg>--pinentry-mode</arg>
+            <arg>loopback</arg>
+          </gpgArguments>
+        </configuration>
+      </plugin>
+
+
     </plugins>
   </build>
 
@@ -173,6 +210,7 @@
               <publishingServerId>central</publishingServerId>
             </configuration>
           </plugin>
+          <!-- sign -->
         </plugins>
       </build>
     </profile>
