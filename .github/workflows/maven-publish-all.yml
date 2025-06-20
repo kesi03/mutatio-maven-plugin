@@ -25,8 +25,8 @@ jobs:
             [
               {
                 "id": "central",
-                "username": "${{ secrets.OSSRH_USERNAME }}",
-                "password": "${{ secrets.OSSRH_PASSWORD }}"
+                "username": "${{ secrets.CENTRAL_USERNAME }}",
+                "password": "${{ secrets.CENTRAL_PASSWORD }}"
               },
               {
                 "id": "github",
@@ -35,14 +35,30 @@ jobs:
               }
             ]
 
-      - name: Import GPG key
+      - name: Import and trust GPG key
         run: |
-          echo "${{ secrets.GPG_PRIVATE_KEY }}" | base64 --decode | gpg --batch --import
+          echo "$GPG_PRIVATE_KEY" | base64 --decode > private.key
+          gpg --batch --import private.key
+
+          # Extract the full fingerprint (not just the key ID)
+          KEY_FP=$(gpg --list-secret-keys --with-colons | grep '^fpr' | head -n1 | cut -d: -f10)
+          echo "KEY_FP=$KEY_FP" >> $GITHUB_ENV
+
+          # Set trust level to ultimate (6)
+          echo "$KEY_FP:6:" | gpg --import-ownertrust
         env:
           GPG_PRIVATE_KEY: ${{ secrets.GPG_PRIVATE_KEY }}
 
+      - name: Set GPG_TTY
+        run: echo "GPG_TTY=$(tty)" >> $GITHUB_ENV
+
+      - name: Test GPG signing works
+        run: echo "test" | gpg --batch --yes --pinentry-mode loopback --passphrase "$GPG_PASSPHRASE" --clearsign
+        env:
+          GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
+
       - name: Deploy to Maven Central
-        run: mvn clean deploy -P central -Dgpg.passphrase=${{ secrets.GPG_PASSPHRASE }}
+        run: mvn clean deploy -P central
 
       - name: Deploy to GitHub Packages
         run: mvn deploy -P github
