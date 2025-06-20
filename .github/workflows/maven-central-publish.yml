@@ -40,5 +40,8 @@ jobs:
       - name: List GPG keys
         run: gpg --list-secret-keys --keyid-format LONG
 
+      - name: Verify GPG key is usable
+        run: echo "test" | gpg --clearsign
+
       - name: Deploy to Maven Central
-        run: mvn clean deploy -P central -Dgpg.passphrase=${{ secrets.GPG_PASSPHRASE }} -Dgpg.gpg.keyname=${{ secrets.GPG_KEY_ID }}
+        run: mvn clean deploy -P central
