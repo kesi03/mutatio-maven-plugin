@@ -31,13 +31,14 @@ public class GitUtils {
         return branch;
     }
 
-    public static void changeBranch(@NotNull BranchType branchType) {
-        try (Git git = Git.open(new File("."))) {
-            String targetBranch = branchType.toString();
+    public static void changeBranch(String targetBranch) {
+        Git git = null;
+        try {
+            git = Git.open(new File("."));
             String currentBranch = git.getRepository().getBranch();
 
             if (Objects.equals(currentBranch, targetBranch)) {
-                return; // Already on the desired branch
+                System.out.println("Already on branch '" + targetBranch + "'.");
             }
 
             boolean localExists = git.branchList()
@@ -47,7 +48,7 @@ public class GitUtils {
 
             if (localExists) {
                 git.checkout().setName(targetBranch).call();
-                return;
+                System.out.println("Switched to existing local branch '" + targetBranch + "'.");
             }
 
             boolean remoteExists = git.branchList()
@@ -63,21 +64,22 @@ public class GitUtils {
                         .setUpstreamMode(CreateBranchCommand.SetupUpstreamMode.TRACK)
                         .setStartPoint("origin/" + targetBranch)
                         .call();
+                System.out.println("Created and switched to branch '" + targetBranch + "' tracking origin.");
             } else {
                 git.checkout()
                         .setCreateBranch(true)
                         .setName(targetBranch)
                         .call();
+                System.out.println("Created and switched to new local branch '" + targetBranch + "'.");
             }
-
         } catch (IOException | GitAPIException e) {
+            System.err.println("Failed to change branch to '" + targetBranch + "'"+e.getMessage());
             throw new RuntimeException("Failed to change branch", e);
         }
     }
 
-    public static void changeBranch(@NotNull BranchType branchType, Log log) {
+    public static void changeBranch(String targetBranch, Log log) {
         try (Git git = Git.open(new File("."))) {
-            String targetBranch = branchType.toString();
             String currentBranch = git.getRepository().getBranch();
 
             if (Objects.equals(currentBranch, targetBranch)) {
@@ -119,7 +121,7 @@ public class GitUtils {
             }
 
         } catch (IOException | GitAPIException e) {
-            log.error("Failed to change branch to '" + branchType + "'", e);
+            log.error("Failed to change branch to '" + targetBranch + "'", e);
             throw new RuntimeException("Failed to change branch", e);
         }
     }

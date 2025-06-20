@@ -73,7 +73,7 @@ public class GitCommand {
         try {
             git = Git.open(new File("."));
             branch = git.getRepository().getBranch();
-            log.info("current branch is:"+branch);
+            log.info("current branch is: "+branch);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }

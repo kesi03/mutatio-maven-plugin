@@ -2,8 +2,7 @@ package com.mockholm.mojos;
 
 import com.mockholm.config.Branch;
 import com.mockholm.config.BranchType;
-import com.mockholm.models.Commons;
-import com.mockholm.mojos.commons.BranchMojo;
+import com.mockholm.models.MojoCommons;
 import com.mockholm.mojos.commons.ReleaseMojo;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
@@ -25,12 +24,19 @@ public class ReleaseEndMojo extends AbstractMojo {
     @Parameter(property = "branch", name = "branch")
     private Branch branch = new Branch();
 
+    @Parameter(property = "release", name="release")
+    private String release;
+
+    @Parameter(property = "mainOrMaster", name="mainOrMaster", defaultValue = "MASTER")
+    private BranchType mainOrMaster;
+
     public void execute() throws MojoExecutionException, MojoFailureException {
-        new ReleaseMojo(new Commons()
+
+        new ReleaseMojo(new MojoCommons()
                 .withLog(getLog())
                 .withBranch(branch)
                 .withProject(project)
                 .withBaseDir(baseDir))
-                .executeEnd(BranchType.RELEASE);
+                .executeEnd(release,mainOrMaster);
     }
 }

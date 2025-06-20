@@ -5,7 +5,7 @@ import com.mockholm.commands.PomCommand;
 import com.mockholm.config.BranchAction;
 import com.mockholm.config.BranchType;
 import com.mockholm.models.CommitDescription;
-import com.mockholm.models.Commons;
+import com.mockholm.models.MojoCommons;
 import com.mockholm.models.ConventionalCommit;
 import com.mockholm.utils.CommitUtils;
 import com.mockholm.utils.GitUtils;
@@ -19,9 +19,9 @@ import java.util.Optional;
 import java.util.concurrent.atomic.AtomicReference;
 
 public class BranchMojo {
-    private final Commons commons;
+    private final MojoCommons commons;
 
-    public BranchMojo(Commons commons){
+    public BranchMojo(MojoCommons commons){
         this.commons=commons;
     }
 

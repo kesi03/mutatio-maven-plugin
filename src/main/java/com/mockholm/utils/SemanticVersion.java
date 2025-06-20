@@ -41,8 +41,12 @@ public class SemanticVersion {
     public String toString() {
         StringBuilder sb = new StringBuilder();
         sb.append(major).append(".").append(minor).append(".").append(patch);
-        if (preRelease != null) sb.append("-").append(preRelease);
-        if (build != null) sb.append("+").append(build);
+        if (preRelease != null && !preRelease.isEmpty()) {
+            sb.append("-").append(preRelease);
+        }
+        if (build != null && !build.isEmpty()) {
+            sb.append("+").append(build);
+        }
         return sb.toString();
     }
 

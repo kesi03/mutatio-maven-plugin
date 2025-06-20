@@ -7,90 +7,113 @@ import com.mockholm.config.BranchType;
 import com.mockholm.config.ReleaseType;
 import com.mockholm.config.VersionIdentifier;
 import com.mockholm.models.CommitDescription;
-import com.mockholm.models.Commons;
+import com.mockholm.models.MojoCommons;
 import com.mockholm.models.ConventionalCommit;
 import com.mockholm.utils.CommitUtils;
 import com.mockholm.utils.GitUtils;
-import com.mockholm.utils.PomUtils;
 import com.mockholm.utils.SemanticVersion;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
-import java.util.Optional;
 import java.util.concurrent.atomic.AtomicReference;
 
 public class ReleaseMojo {
-    private final Commons commons;
+    private final MojoCommons commons;
 
-    public ReleaseMojo(Commons commons){
+    public ReleaseMojo(MojoCommons commons){
         this.commons=commons;
     }
 
     public void executeStart(@NotNull ReleaseType releaseType, VersionIdentifier versionIdentifier){
-        commons.getLog().info("currentBranch: " + GitUtils.getCurrentBranch());
+        commons.getLog().info("Current Branch Name: " + GitUtils.getCurrentBranch());
         commons.getLog().info("Current version: " + commons.getProject().getVersion());
 
         SemanticVersion currentVersion = SemanticVersion.parse(commons.getProject().getVersion());
 
-        commons.getLog().info("Branch: "+currentVersion.toString());
+        commons.getLog().info("Current Branch Version: "+currentVersion.toString());
 
         SemanticVersion nextVersion = getNextVersion(currentVersion,releaseType);
 
-        String version =BranchType.RELEASE.getValue()+"-"+nextVersion.toString();
+        commons.getLog().info("Release Branch: "+nextVersion.toString());
 
-        commons.getLog().info("Branch: "+version);
+        SemanticVersion nextDevelopmentVersion = getNextVersion(currentVersion,releaseType,VersionIdentifier.SNAPSHOT.getValue(), "");
 
-        SemanticVersion nextDevelopmentVersion = getNextVersion(currentVersion,releaseType,versionIdentifier.getValue(),"");
+        commons.getLog().info("Dev Branch: "+nextDevelopmentVersion.toString());
 
-        String devVersion =BranchType.RELEASE.getValue()+"-"+nextVersion.toString();
+        AtomicReference<String> commitMessage = new AtomicReference<>("");
 
-        commons.getLog().info("Dev Branch: "+devVersion);
+        try {
+            PomCommand pomCommand = new PomCommand(commons.getBaseDir(), commons.getLog());
+            new GitCommand(commons.getLog())
+                    .changeBranch(BranchType.DEVELOPMENT.getValue())
+                    .changeBranch(BranchType.RELEASE.getValue()+"/"+nextVersion.toString())
+                    .gitInfo()
+                    .runPomCommands(cmd -> {
+                        try {
+                            pomCommand
+                                    .setVersion(nextVersion.toString())
+                                    .updatePomVersion()
+                                    .updateModules();
 
+                            CommitDescription description = new CommitDescription.Builder()
+                                    .action(BranchAction.START)
+                                    .branchName(nextVersion.toString())
+                                    .message("branch...")
+                                    .build();
 
-        CommitDescription description = new CommitDescription.Builder()
-                .action(BranchAction.START)
-                .branchName(nextVersion.toString())
-                .message("branch...")
-                .build();
+                            ConventionalCommit commit = new ConventionalCommit.Builder()
+                                    .type(BranchType.RELEASE)
+                                    .scope(nextVersion.toString())
+                                    .description(description.toString())
+                                    .isBreaking(false)
+                                    .body("")
+                                    .footer("")
+                                    .build();
+                            commitMessage.set(CommitUtils.format(commit));
+                            commons.getLog().info("Commit: " + commitMessage);
+                        } catch (MojoExecutionException e) {
+                            throw new RuntimeException(e);
+                        }
+                    }, pomCommand)
+                    .addAllChanges()
+                    .commit(commitMessage.get())
+                    .changeBranch(BranchType.DEVELOPMENT.getValue())
+                    .runPomCommands(cmd -> {
+                        try {
+                            pomCommand
+                                    .setVersion(nextDevelopmentVersion.toString())
+                                    .updatePomVersion()
+                                    .updateModules();
 
-        ConventionalCommit commit = new ConventionalCommit.Builder()
-                .type(BranchType.RELEASE)
-                .scope(nextVersion.toString())
-                .description(description.toString())
-                .isBreaking(false)
-                .body("")
-                .footer("")
-                .build();
+                            CommitDescription description = new CommitDescription.Builder()
+                                    .action(BranchAction.START)
+                                    .branchName(BranchType.DEVELOPMENT.getValue())
+                                    .message("branch...")
+                                    .build();
 
-        String commitMessage = CommitUtils.format(commit);
+                            ConventionalCommit commit = new ConventionalCommit.Builder()
+                                    .type(BranchType.DEVELOPMENT)
+                                    .scope("")
+                                    .description(description.toString())
+                                    .isBreaking(false)
+                                    .body("")
+                                    .footer("")
+                                    .build();
+                            commitMessage.set(CommitUtils.format(commit));
+                            commons.getLog().info("Commit: " + commitMessage);
+                        } catch (MojoExecutionException e) {
+                            throw new RuntimeException(e);
+                        }
+                    }, pomCommand)
+                    .addAllChanges()
+                    .commit(commitMessage.get())
+                    .gitInfo()
+                    .close();
 
-        commons.getLog().info("Commit: " + commitMessage);
-
-//        try {
-//            PomCommand pomCommand = new PomCommand(commons.getBaseDir(), commons.getLog());
-//            new GitCommand(commons.getLog())
-//                    .changeBranch(BranchType.DEVELOPMENT.getValue())
-//                    .changeBranch(BranchType.RELEASE.getValue()+"/"+nextVersion.toString())
-//                    .gitInfo()
-//                    .runPomCommands(cmd -> {
-//                        try {
-//                            pomCommand
-//                                    .setVersion(nextVersion.toString())
-//                                    .updatePomVersion()
-//                                    .updateModules();
-//                        } catch (MojoExecutionException e) {
-//                            throw new RuntimeException(e);
-//                        }
-//                    }, pomCommand)
-//                    .addAllChanges()
-//                    .commit(commitMessage)
-//                    .gitInfo()
-//                    .close();
-//
-//        } catch (IOException e) {
-//            throw new RuntimeException(e);
-//        }
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
 
     }
 
@@ -125,88 +148,56 @@ public class ReleaseMojo {
                 build != null ? build : ""
         );
     }
-    public void executeEnd(@NotNull BranchType branchType){
+
+    public void executeEnd(@NotNull String release,BranchType mainOrMaster){
         commons.getLog().info("currentBranch: " + GitUtils.getCurrentBranch());
         commons.getLog().info("Current version: " + commons.getProject().getVersion());
 
         SemanticVersion currentVersion = SemanticVersion.parse(commons.getProject().getVersion());
 
-        // Use Optional to provide a default value if branch name is null or blank
-        String branchName = Optional.ofNullable(commons.getBranch().getName())
-                .filter(name -> !name.isBlank())
-                .orElse("123456");
+        commons.getLog().info("Current version: " + currentVersion.toString());
 
-        String branchFullname =branchType.getValue()+"-"+branchName;
+        SemanticVersion releaseVersion = SemanticVersion.parse(release);
 
-        commons.getLog().info("Branch: "+branchFullname);
+        commons.getLog().info("Release version: " + releaseVersion.toString());
 
-        String preRelease = String.format("%s-%s-%s",
-                currentVersion.getPreRelease(),
-                branchType.getUppercaseValue(),
-                branchName);
+        String releaseBranch = "release/"+releaseVersion.toString();
 
-        SemanticVersion featVersion = new SemanticVersion(
-                currentVersion.getMajor(),
-                currentVersion.getMinor(),
-                currentVersion.getPatch(),
-                preRelease,
-                currentVersion.getBuild());
+        PomCommand pomCommand = new PomCommand(commons.getBaseDir(), commons.getLog());
 
+        commons.getLog().info("mainOrMaster: "+mainOrMaster.getValue());
 
-        commons.getLog().info("CHORE version: " + featVersion.toString());
-
-        CommitDescription description = new CommitDescription.Builder()
-                .action(BranchAction.FINISH)
-                .branchName(branchName)
-                .message("branch...")
-                .build();
-
-        ConventionalCommit commit = new ConventionalCommit.Builder()
-                .type(branchType)
-                .scope(branchName)
-                .description(description.toString())
-                .isBreaking(false)
-                .body("")
-                .footer("")
-                .build();
-
-        String commitMessage = CommitUtils.format(commit);
-
-        commons.getLog().info("Commit: " + commitMessage);
+        AtomicReference<String> commitMessage = new AtomicReference<>("");
 
         try {
-            PomCommand pomCommand = new PomCommand(commons.getBaseDir(), commons.getLog());
-            AtomicReference<String> developmentVersion= new AtomicReference<>("");
             new GitCommand(commons.getLog())
-                    .changeBranch(BranchType.DEVELOPMENT.getValue())
-                    .runPomCommands(cmd -> {
-                        developmentVersion.set(PomUtils.getVersion(commons.getBaseDir()));
-                        commons.getLog().info("version: "+developmentVersion);
-
-                    }, pomCommand)
-                    .changeBranch(branchType.getValue()+"/"+branchName)
+                    .changeBranch(releaseBranch)
                     .gitInfo()
                     .runPomCommands(cmd -> {
-                        commons.getLog().info("dev: "+developmentVersion);
-                        commons.getLog().info("version: "+PomUtils.getVersion(commons.getBaseDir()));
-                    }, pomCommand)
-                    .mergeBranches(branchType.getValue()+"/"+branchName,BranchType.DEVELOPMENT.getValue())
-                    .changeBranch(BranchType.DEVELOPMENT.getValue())
-                    .runPomCommands(cmd -> {
-                        try {
-                            pomCommand
-                                    .setVersion(developmentVersion.get())
-                                    .updatePomVersion()
-                                    .updateModules();
-                        } catch (MojoExecutionException e) {
-                            throw new RuntimeException(e);
-                        }
-                    }, pomCommand)
+                        CommitDescription description = new CommitDescription.Builder()
+                                .action(BranchAction.FINISH)
+                                .branchName(releaseVersion.toString())
+                                .message("branch...")
+                                .build();
+
+                        ConventionalCommit commit = new ConventionalCommit.Builder()
+                                .type(BranchType.RELEASE)
+                                .scope(releaseVersion.toString())
+                                .description(description.toString())
+                                .isBreaking(false)
+                                .body("")
+                                .footer("")
+                                .build();
+                        commitMessage.set(CommitUtils.format(commit));
+                        commons.getLog().info("Commit: " + commitMessage);
+                    },pomCommand)
                     .addAllChanges()
-                    .commit(commitMessage)
+                    .commit(commitMessage.get())
+                    .mergeBranches(releaseBranch, mainOrMaster.getValue())
+                    .changeBranch(mainOrMaster.getValue())
+                    .createTag("release-"+releaseVersion.toString())
                     .gitInfo()
                     .close();
-
         } catch (IOException e) {
             throw new RuntimeException(e);
         }

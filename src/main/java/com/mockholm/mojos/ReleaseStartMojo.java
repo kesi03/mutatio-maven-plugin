@@ -1,11 +1,9 @@
 package com.mockholm.mojos;
 
 import com.mockholm.config.Branch;
-import com.mockholm.config.BranchType;
 import com.mockholm.config.ReleaseType;
 import com.mockholm.config.VersionIdentifier;
-import com.mockholm.models.Commons;
-import com.mockholm.mojos.commons.BranchMojo;
+import com.mockholm.models.MojoCommons;
 import com.mockholm.mojos.commons.ReleaseMojo;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugins.annotations.LifecyclePhase;
@@ -32,7 +30,7 @@ public class ReleaseStartMojo extends AbstractMojo {
     private VersionIdentifier versionIdentifier;
 
     public void execute() {
-        new ReleaseMojo(new Commons()
+        new ReleaseMojo(new MojoCommons()
                 .withLog(getLog())
                 .withBranch(branch)
                 .withProject(project)

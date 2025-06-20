@@ -2,11 +2,9 @@ package com.mockholm.mojos;
 
 import com.mockholm.config.Branch;
 import com.mockholm.config.BranchType;
-import com.mockholm.models.Commons;
+import com.mockholm.models.MojoCommons;
 import com.mockholm.mojos.commons.BranchMojo;
 import org.apache.maven.plugin.AbstractMojo;
-import org.apache.maven.plugin.MojoExecutionException;
-import org.apache.maven.plugin.MojoFailureException;
 import org.apache.maven.plugins.annotations.LifecyclePhase;
 import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
@@ -25,7 +23,7 @@ public class ExperimentEndMojo extends AbstractMojo {
     private Branch branch = new Branch();
 
     public void execute(){
-        new BranchMojo(new Commons()
+        new BranchMojo(new MojoCommons()
                 .withLog(getLog())
                 .withBranch(branch)
                 .withProject(project)

@@ -4,7 +4,7 @@ import com.mockholm.config.Branch;
 import org.apache.maven.plugin.logging.Log;
 import org.apache.maven.project.MavenProject;
 
-public class Commons {
+public class MojoCommons {
     Log log;
     private MavenProject project;
 
@@ -21,7 +21,7 @@ public class Commons {
         this.log = log;
     }
 
-    public Commons withLog(Log log) {
+    public MojoCommons withLog(Log log) {
         this.log = log;
         return this;
     }
@@ -34,7 +34,7 @@ public class Commons {
         this.project = project;
     }
 
-    public Commons withProject(MavenProject project) {
+    public MojoCommons withProject(MavenProject project) {
         this.project = project;
         return this;
     }
@@ -43,7 +43,7 @@ public class Commons {
         return baseDir;
     }
 
-    public Commons withBaseDir(String baseDir) {
+    public MojoCommons withBaseDir(String baseDir) {
         this.baseDir = baseDir;
         return this;
     }
@@ -56,7 +56,7 @@ public class Commons {
         return branch;
     }
 
-    public Commons withBranch(Branch branch) {
+    public MojoCommons withBranch(Branch branch) {
         this.branch = branch;
         return this;
     }
