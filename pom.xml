@@ -1,5 +1,6 @@
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
   <modelVersion>4.0.0</modelVersion>
   <groupId>com.mockholm</groupId>
   <artifactId>mutatio-maven-plugin</artifactId>
@@ -7,6 +8,7 @@
   <version>1.0.0</version>
   <name>mutatio-maven-plugin Maven Mojo</name>
   <url>http://maven.apache.org</url>
+
   <properties>
     <maven.compiler.source>11</maven.compiler.source>
     <maven.compiler.target>11</maven.compiler.target>
@@ -18,15 +20,6 @@
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
   </properties>
-
-  <distributionManagement>
-    <repository>
-      <id>github</id>
-      <url>https://maven.pkg.github.com/kesi03/mutatio-maven-plugin</url>
-    </repository>
-  </distributionManagement>
-
-
 
   <dependencies>
     <dependency>
@@ -53,14 +46,13 @@
     <dependency>
       <groupId>org.apache.maven</groupId>
       <artifactId>maven-model</artifactId>
-      <version>${maven-model.version}</version> <!-- Or a matching version -->
+      <version>${maven-model.version}</version>
     </dependency>
     <dependency>
       <groupId>org.apache.maven</groupId>
       <artifactId>maven-model-builder</artifactId>
       <version>${maven-model.version}</version>
     </dependency>
-
     <dependency>
       <groupId>junit</groupId>
       <artifactId>junit</artifactId>
@@ -74,8 +66,40 @@
       <scope>compile</scope>
     </dependency>
   </dependencies>
+
   <build>
     <plugins>
+      <!-- GitHub deployment plugin -->
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-deploy-plugin</artifactId>
+        <version>3.1.2</version>
+        <executions>
+          <execution>
+            <id>deploy-to-github</id>
+            <phase>deploy</phase>
+            <goals>
+              <goal>deploy</goal>
+            </goals>
+            <configuration>
+              <altDeploymentRepository>github::default::https://maven.pkg.github.com/kesi03/mutatio-maven-plugin</altDeploymentRepository>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+
+      <!-- Maven Central plugin -->
+      <plugin>
+        <groupId>org.sonatype.central</groupId>
+        <artifactId>central-publishing-maven-plugin</artifactId>
+        <version>0.7.0</version>
+        <extensions>true</extensions>
+        <configuration>
+          <publishingServerId>central</publishingServerId>
+        </configuration>
+      </plugin>
+
+      <!-- Plugin metadata generator -->
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-plugin-plugin</artifactId>
@@ -91,30 +115,4 @@
       </plugin>
     </plugins>
   </build>
-
-  <profiles>
-    <profile>
-      <id>central</id>
-      <distributionManagement>
-        <repository>
-          <id>ossrh</id>
-          <url>https://central.sonatype.com/api/v1/publish/</url>
-        </repository>
-        <snapshotRepository>
-          <id>ossrh</id>
-          <url>https://central.sonatype.com/repository/maven-snapshots/</url>
-        </snapshotRepository>
-      </distributionManagement>
-    </profile>
-
-    <profile>
-      <id>github</id>
-      <distributionManagement>
-        <repository>
-          <id>github</id>
-          <url>https://maven.pkg.github.com/kesi03/mutatio-maven-plugin</url>
-        </repository>
-      </distributionManagement>
-    </profile>
-  </profiles>
 </project>
