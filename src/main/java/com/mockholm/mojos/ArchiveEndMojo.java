@@ -2,32 +2,35 @@ package com.mockholm.mojos;
 
 import com.mockholm.config.Branch;
 import com.mockholm.config.BranchType;
+import com.mockholm.config.GitConfiguration;
 import com.mockholm.models.MojoCommons;
 import com.mockholm.mojos.commons.BranchMojo;
 import org.apache.maven.plugin.AbstractMojo;
+import org.apache.maven.plugins.annotations.Component;
 import org.apache.maven.plugins.annotations.LifecyclePhase;
 import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
 import org.apache.maven.project.MavenProject;
+import org.apache.maven.settings.Settings;
 
 @Mojo(name = "archive-end", aggregator = true, defaultPhase = LifecyclePhase.NONE)
 public class ArchiveEndMojo extends AbstractMojo {
 
-    @Parameter(defaultValue = "${project}", required = true, readonly = true)
+    @Component
     private MavenProject project;
-
-    @Parameter(defaultValue = "${project.basedir}", readonly = true)
-    private String baseDir;
 
     @Parameter(property = "branch", name = "branch")
     private Branch branch = new Branch();
+
+    @Component
+    private Settings settings;
 
     public void execute() {
         new BranchMojo(new MojoCommons()
                 .withLog(getLog())
                 .withBranch(branch)
                 .withProject(project)
-                .withBaseDir(baseDir))
+                .withSettings(settings))
                 .executeEnd(BranchType.ARCHIVE);
     }
 }

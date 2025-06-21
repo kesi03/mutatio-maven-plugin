@@ -4,6 +4,7 @@ import com.mockholm.commands.GitCommand;
 import com.mockholm.commands.PomCommand;
 import com.mockholm.config.BranchAction;
 import com.mockholm.config.BranchType;
+import com.mockholm.config.GitConfiguration;
 import com.mockholm.models.CommitDescription;
 import com.mockholm.models.MojoCommons;
 import com.mockholm.models.ConventionalCommit;
@@ -82,10 +83,17 @@ public class BranchMojo {
         commons.getLog().info("Commit: " + commitMessage);
 
         try {
-            PomCommand pomCommand = new PomCommand(commons.getBaseDir(), commons.getLog());
+
+            GitConfiguration gitConfiguration=new GitConfiguration()
+                    .withServerKey(commons.getProject().getProperties().getProperty("gitProvider"))
+                    .withScm(commons.getProject().getScm())
+                    .withSettings(commons.getSettings());
+            String baseDir = commons.getProject().getBasedir().getAbsolutePath();
+
+            PomCommand pomCommand = new PomCommand(baseDir, commons.getLog());
             new GitCommand(commons.getLog())
-                    .changeBranch(BranchType.DEVELOPMENT.getValue())
-                    .changeBranch(branchType.getValue()+"/"+branchName)
+                    .changeBranch(BranchType.DEVELOPMENT.getValue(),gitConfiguration)
+                    .changeBranch(branchType.getValue()+"/"+branchName,gitConfiguration)
                     .gitInfo()
                     .runPomCommands(cmd -> {
                         try {
@@ -140,7 +148,7 @@ public class BranchMojo {
                 currentVersion.getBuild());
 
 
-        commons.getLog().info("CHORE version: " + featVersion.toString());
+        commons.getLog().info( branchType.getValue()+" version: " + featVersion.toString());
 
         CommitDescription description = new CommitDescription.Builder()
                 .action(BranchAction.FINISH)
@@ -162,23 +170,30 @@ public class BranchMojo {
         commons.getLog().info("Commit: " + commitMessage);
 
         try {
-            PomCommand pomCommand = new PomCommand(commons.getBaseDir(), commons.getLog());
+            GitConfiguration gitConfiguration=new GitConfiguration()
+                    .withServerKey(commons.getProject().getProperties().getProperty("gitProvider"))
+                    .withScm(commons.getProject().getScm())
+                    .withSettings(commons.getSettings());
+            
+            String baseDir = commons.getProject().getBasedir().getAbsolutePath();
+
+            PomCommand pomCommand = new PomCommand(baseDir, commons.getLog());
             AtomicReference<String> developmentVersion= new AtomicReference<>("");
             new GitCommand(commons.getLog())
-                    .changeBranch(BranchType.DEVELOPMENT.getValue())
+                    .changeBranch(BranchType.DEVELOPMENT.getValue(),gitConfiguration)
                     .runPomCommands(cmd -> {
-                        developmentVersion.set(PomUtils.getVersion(commons.getBaseDir()));
+                        developmentVersion.set(PomUtils.getVersion(baseDir));
                         commons.getLog().info("version: "+developmentVersion);
 
                     }, pomCommand)
-                    .changeBranch(branchType.getValue()+"/"+branchName)
+                    .changeBranch(branchType.getValue()+"/"+branchName,gitConfiguration)
                     .gitInfo()
                     .runPomCommands(cmd -> {
                         commons.getLog().info("dev: "+developmentVersion);
-                        commons.getLog().info("version: "+PomUtils.getVersion(commons.getBaseDir()));
+                        commons.getLog().info("version: "+PomUtils.getVersion(baseDir));
                     }, pomCommand)
                     .mergeBranches(branchType.getValue()+"/"+branchName,BranchType.DEVELOPMENT.getValue())
-                    .changeBranch(BranchType.DEVELOPMENT.getValue())
+                    .changeBranch(BranchType.DEVELOPMENT.getValue(),gitConfiguration)
                     .runPomCommands(cmd -> {
                         try {
                             pomCommand

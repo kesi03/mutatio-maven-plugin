@@ -1,6 +1,9 @@
 package com.mockholm.commands;
 
 import com.mockholm.config.BranchType;
+import com.mockholm.config.GitConfiguration;
+import com.mockholm.utils.GitCredentialUtils;
+import org.apache.maven.model.Scm;
 import org.apache.maven.plugin.logging.Log;
 import org.eclipse.jgit.api.*;
 import org.eclipse.jgit.api.errors.GitAPIException;
@@ -139,57 +142,25 @@ public class GitCommand {
         return this;
     }
 
-    @Deprecated
-    public GitCommand changeBranch(String targetBranch) {
-        try {
-            String currentBranch = git.getRepository().getBranch();
 
-            if (Objects.equals(currentBranch, targetBranch)) {
-                info("Already on branch '" + targetBranch + "'.");
-                return this;
-            }
-
-            boolean localExists = git.branchList()
-                    .call()
-                    .stream()
-                    .anyMatch(ref -> ref.getName().equals("refs/heads/" + targetBranch));
-
-            if (localExists) {
-                git.checkout().setName(targetBranch).call();
-                info("Switched to existing local branch '" + targetBranch + "'.");
-                return this;
-            }
-
-            boolean remoteExists = git.branchList()
-                    .setListMode(ListBranchCommand.ListMode.REMOTE)
-                    .call()
-                    .stream()
-                    .anyMatch(ref -> ref.getName().equals("refs/remotes/origin/" + targetBranch));
-
-            if (remoteExists) {
-                git.checkout()
-                        .setCreateBranch(true)
-                        .setName(targetBranch)
-                        .setUpstreamMode(CreateBranchCommand.SetupUpstreamMode.TRACK)
-                        .setStartPoint("origin/" + targetBranch)
-                        .call();
-                info("Created and switched to branch '" + targetBranch + "' tracking origin.");
-            } else {
-                git.checkout()
-                        .setCreateBranch(true)
-                        .setName(targetBranch)
-                        .call();
-                info("Created and switched to new local branch '" + targetBranch + "'.");
-            }
-        } catch (IOException | GitAPIException e) {
-            error("Failed to change branch to '" + targetBranch + "'", e);
-            throw new RuntimeException("Failed to change branch", e);
+    /**
+     * Changes the current Git branch to the specified target branch
+     * @param targetBranch  the name of the branch to switch to
+     * @param configuration the git configuration needed for credentials
+     * @return GitCommand
+     */
+    public GitCommand changeBranch(String targetBranch,GitConfiguration configuration) {
+        if(GitCredentialUtils.isSSH(configuration.getScm())){
+            TransportConfigCallback sshCallback=GitCredentialUtils.getSSHCallBack(configuration.getSettings().getServer("git").getPrivateKey());
+            return changeBranch(targetBranch,sshCallback);
+        }else{
+            CredentialsProvider credentialsProvider=GitCredentialUtils.getUserProvider(configuration.getSettings().getServer("git").getPassword());
+            return changeBranch(targetBranch,credentialsProvider);
         }
-        return this;
     }
 
     /**
-     * Changes the current Git branch to the specified target branch using HTTPS authentication.
+      using HTTPS authentication.
      * If the branch exists locally, it switches directly. If not, it attempts to fetch from origin.
      * If the branch exists remotely, it is created locally and tracked. Otherwise, a new local-only
      * branch is created.
@@ -307,6 +278,8 @@ public class GitCommand {
         }
         return this;
     }
+
+
 
     /**
      * Creates a new Git branch with the given name. If the branch exists remotely on origin,

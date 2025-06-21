@@ -2,10 +2,7 @@ package com.mockholm.mojos.commons;
 
 import com.mockholm.commands.GitCommand;
 import com.mockholm.commands.PomCommand;
-import com.mockholm.config.BranchAction;
-import com.mockholm.config.BranchType;
-import com.mockholm.config.ReleaseType;
-import com.mockholm.config.VersionIdentifier;
+import com.mockholm.config.*;
 import com.mockholm.models.CommitDescription;
 import com.mockholm.models.MojoCommons;
 import com.mockholm.models.ConventionalCommit;
@@ -44,10 +41,16 @@ public class ReleaseMojo {
         AtomicReference<String> commitMessage = new AtomicReference<>("");
 
         try {
-            PomCommand pomCommand = new PomCommand(commons.getBaseDir(), commons.getLog());
+            GitConfiguration gitConfiguration=new GitConfiguration()
+                    .withServerKey(commons.getProject().getProperties().getProperty("gitProvider"))
+                    .withScm(commons.getProject().getScm())
+                    .withSettings(commons.getSettings());
+            String baseDir = commons.getProject().getBasedir().getAbsolutePath();
+            
+            PomCommand pomCommand = new PomCommand(baseDir, commons.getLog());
             new GitCommand(commons.getLog())
-                    .changeBranch(BranchType.DEVELOPMENT.getValue())
-                    .changeBranch(BranchType.RELEASE.getValue()+"/"+nextVersion.toString())
+                    .changeBranch(BranchType.DEVELOPMENT.getValue(),gitConfiguration)
+                    .changeBranch(BranchType.RELEASE.getValue()+"/"+nextVersion.toString(),gitConfiguration)
                     .gitInfo()
                     .runPomCommands(cmd -> {
                         try {
@@ -78,7 +81,7 @@ public class ReleaseMojo {
                     }, pomCommand)
                     .addAllChanges()
                     .commit(commitMessage.get())
-                    .changeBranch(BranchType.DEVELOPMENT.getValue())
+                    .changeBranch(BranchType.DEVELOPMENT.getValue(),gitConfiguration)
                     .runPomCommands(cmd -> {
                         try {
                             pomCommand
@@ -163,15 +166,22 @@ public class ReleaseMojo {
 
         String releaseBranch = "release/"+releaseVersion.toString();
 
-        PomCommand pomCommand = new PomCommand(commons.getBaseDir(), commons.getLog());
+        String baseDir = commons.getProject().getBasedir().getAbsolutePath();
+
+        PomCommand pomCommand = new PomCommand(baseDir, commons.getLog());
 
         commons.getLog().info("mainOrMaster: "+mainOrMaster.getValue());
 
         AtomicReference<String> commitMessage = new AtomicReference<>("");
 
         try {
+            GitConfiguration gitConfiguration=new GitConfiguration()
+                    .withServerKey(commons.getProject().getProperties().getProperty("gitProvider"))
+                    .withScm(commons.getProject().getScm())
+                    .withSettings(commons.getSettings());
+
             new GitCommand(commons.getLog())
-                    .changeBranch(releaseBranch)
+                    .changeBranch(releaseBranch,gitConfiguration)
                     .gitInfo()
                     .runPomCommands(cmd -> {
                         CommitDescription description = new CommitDescription.Builder()
@@ -194,7 +204,7 @@ public class ReleaseMojo {
                     .addAllChanges()
                     .commit(commitMessage.get())
                     .mergeBranches(releaseBranch, mainOrMaster.getValue())
-                    .changeBranch(mainOrMaster.getValue())
+                    .changeBranch(mainOrMaster.getValue(),gitConfiguration)
                     .createTag("release-"+releaseVersion.toString())
                     .gitInfo()
                     .close();

@@ -5,19 +5,21 @@ import com.mockholm.config.BranchType;
 import com.mockholm.models.MojoCommons;
 import com.mockholm.mojos.commons.BranchMojo;
 import org.apache.maven.plugin.AbstractMojo;
+import org.apache.maven.plugins.annotations.Component;
 import org.apache.maven.plugins.annotations.LifecyclePhase;
 import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
 import org.apache.maven.project.MavenProject;
+import org.apache.maven.settings.Settings;
 
 @Mojo(name = "build-end", aggregator = true, defaultPhase = LifecyclePhase.NONE)
 public class BuildEndMojo extends AbstractMojo {
 
-    @Parameter(defaultValue = "${project}", required = true, readonly = true)
+    @Component
     private MavenProject project;
 
-    @Parameter(defaultValue = "${project.basedir}", readonly = true)
-    private String baseDir;
+    @Component
+    private Settings settings;
 
     @Parameter(property = "branch", name = "branch")
     private Branch branch = new Branch();
@@ -27,7 +29,7 @@ public class BuildEndMojo extends AbstractMojo {
                 .withLog(getLog())
                 .withBranch(branch)
                 .withProject(project)
-                .withBaseDir(baseDir))
+                .withSettings(settings))
                 .executeEnd(BranchType.BUILD);
     }
 }
