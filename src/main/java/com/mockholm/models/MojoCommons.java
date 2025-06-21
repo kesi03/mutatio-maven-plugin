@@ -3,13 +3,13 @@ package com.mockholm.models;
 import com.mockholm.config.Branch;
 import org.apache.maven.plugin.logging.Log;
 import org.apache.maven.project.MavenProject;
+import org.apache.maven.settings.Settings;
 
 public class MojoCommons {
     Log log;
     private MavenProject project;
 
-    private String baseDir;
-
+    private Settings settings;
 
     private Branch branch;
 
@@ -39,19 +39,6 @@ public class MojoCommons {
         return this;
     }
 
-    public String getBaseDir() {
-        return baseDir;
-    }
-
-    public MojoCommons withBaseDir(String baseDir) {
-        this.baseDir = baseDir;
-        return this;
-    }
-
-    public void setBaseDir(String baseDir) {
-        this.baseDir = baseDir;
-    }
-
     public Branch getBranch() {
         return branch;
     }
@@ -63,5 +50,18 @@ public class MojoCommons {
 
     public void setBranch(Branch branch) {
         this.branch = branch;
+    }
+
+    public Settings getSettings() {
+        return settings;
+    }
+
+    public MojoCommons withSettings(Settings settings) {
+        this.settings = settings;
+        return this;
+    }
+
+    public void setSettings(Settings settings) {
+        this.settings = settings;
     }
 }

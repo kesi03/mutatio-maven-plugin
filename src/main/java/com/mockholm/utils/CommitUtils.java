@@ -4,8 +4,20 @@ package com.mockholm.utils;
 import com.mockholm.config.BranchType;
 import com.mockholm.models.ConventionalCommit;
 
+/**
+ * Utility class for working with Conventional Commits.
+ * Provides methods for formatting a {@link ConventionalCommit} into a standardized message,
+ * and for parsing a commit message string back into a {@code ConventionalCommit} object.
+ */
 public class CommitUtils {
 
+    /**
+     * Formats a {@link ConventionalCommit} instance into a conventional commit message string.
+     * Follows the format: {@code type(scope)!: description} with optional body and footer.
+     *
+     * @param commit the ConventionalCommit object to format
+     * @return a formatted commit message string
+     */
     public static String format(ConventionalCommit commit) {
         StringBuilder sb = new StringBuilder();
 
@@ -29,6 +41,16 @@ public class CommitUtils {
         return sb.toString();
     }
 
+    /**
+     * Parses a conventional commit message string into a {@link ConventionalCommit} object.
+     * Expects the format: {@code type(scope)!: description}, optionally followed by body and footer,
+     * separated by double line breaks.
+     *
+     * @param message the commit message string to parse
+     * @return a ConventionalCommit object representing the parsed message
+     * @throws IllegalArgumentException if the commit message does not follow the expected format
+     *                                  or the commit type is not recognized
+     */
     public static ConventionalCommit parse(String message) {
         String[] parts = message.split("\\R\\R", 3);
         String header = parts[0];

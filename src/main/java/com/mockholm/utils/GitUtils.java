@@ -1,6 +1,5 @@
 package com.mockholm.utils;
 
-import com.mockholm.config.BranchType;
 import org.apache.maven.plugin.logging.Log;
 import org.eclipse.jgit.api.CreateBranchCommand;
 import org.eclipse.jgit.api.Git;
