@@ -15,10 +15,10 @@ import org.apache.maven.settings.Settings;
 @Mojo(name = "style-start", aggregator = true, defaultPhase = LifecyclePhase.NONE)
 public class StyleStartMojo extends AbstractMojo {
 
-    @Component
+    @Parameter( defaultValue = "${project}", readonly = true )
     private MavenProject project;
 
-    @Component
+    @Parameter( defaultValue = "${settings}", readonly = true )
     private Settings settings;
 
     @Parameter(property = "branch", name = "branch")

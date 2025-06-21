@@ -15,10 +15,10 @@ import org.apache.maven.settings.Settings;
 @Mojo(name = "code-start", aggregator = true, defaultPhase = LifecyclePhase.NONE)
 public class CodeStartMojo extends AbstractMojo {
 
-    @Component
+    @Parameter( defaultValue = "${project}", readonly = true )
     private MavenProject project;
 
-    @Component
+    @Parameter( defaultValue = "${settings}", readonly = true)
     private Settings settings;
 
 

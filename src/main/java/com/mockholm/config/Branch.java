@@ -43,10 +43,10 @@ public class Branch {
         return branchType;
     }
 
-    public Branch withBranchType(BranchType branchType) {
-        this.branchType = branchType;
-        return this;
-    }
+//    public Branch withBranchType(BranchType branchType) {
+//        this.branchType = branchType;
+//        return this;
+//    }
 
     public void setBranchType(BranchType branchType) {
         this.branchType = branchType;

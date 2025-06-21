@@ -16,10 +16,10 @@ import static org.apache.maven.plugins.annotations.LifecyclePhase.*;
 @Mojo(name = "hotfix-end", aggregator = true, defaultPhase = NONE)
 public class HotfixEndMojo extends AbstractMojo {
 
-    @Component
+    @Parameter( defaultValue = "${project}", readonly = true )
     private MavenProject project;
 
-    @Component
+    @Parameter( defaultValue = "${settings}", readonly = true)
     private Settings settings;
 
     @Parameter(property = "branch", name = "branch")

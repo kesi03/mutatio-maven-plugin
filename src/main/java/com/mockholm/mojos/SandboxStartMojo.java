@@ -15,10 +15,10 @@ import org.apache.maven.settings.Settings;
 @Mojo(name = "sandbox-start", aggregator = true, defaultPhase = LifecyclePhase.NONE)
 public class SandboxStartMojo extends AbstractMojo {
 
-    @Component
+    @Parameter( defaultValue = "${project}", readonly = true )
     private MavenProject project;
 
-    @Component
+    @Parameter( defaultValue = "${settings}", readonly = true )
     private Settings settings;
 
 

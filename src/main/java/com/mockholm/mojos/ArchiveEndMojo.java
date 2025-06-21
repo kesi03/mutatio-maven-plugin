@@ -16,13 +16,13 @@ import org.apache.maven.settings.Settings;
 @Mojo(name = "archive-end", aggregator = true, defaultPhase = LifecyclePhase.NONE)
 public class ArchiveEndMojo extends AbstractMojo {
 
-    @Component
+    @Parameter( defaultValue = "${project}", readonly = true )
     private MavenProject project;
 
     @Parameter(property = "branch", name = "branch")
     private Branch branch = new Branch();
 
-    @Component
+    @Parameter( defaultValue = "${settings}", readonly = true )
     private Settings settings;
 
     public void execute() {
