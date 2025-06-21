@@ -151,10 +151,12 @@ public class GitCommand {
      */
     public GitCommand changeBranch(String targetBranch,GitConfiguration configuration) {
         if(GitCredentialUtils.isSSH(configuration.getScm())){
-            TransportConfigCallback sshCallback=GitCredentialUtils.getSSHCallBack(configuration.getSettings().getServer("git").getPrivateKey());
+            info("using ssh");
+            TransportConfigCallback sshCallback=GitCredentialUtils.getSSHCallBack(configuration.getSettings().getServer(configuration.getServerKey()).getPrivateKey());
             return changeBranch(targetBranch,sshCallback);
         }else{
-            CredentialsProvider credentialsProvider=GitCredentialUtils.getUserProvider(configuration.getSettings().getServer("git").getPassword());
+            info("using credentials");
+            CredentialsProvider credentialsProvider=GitCredentialUtils.getUserProvider(configuration.getSettings().getServer(configuration.getServerKey()).getPassword());
             return changeBranch(targetBranch,credentialsProvider);
         }
     }
