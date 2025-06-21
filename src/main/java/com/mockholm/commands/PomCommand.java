@@ -12,12 +12,26 @@ import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 
+/**
+ * Command utility for reading, updating, and propagating version information
+ * across a Maven {@code pom.xml} file and its modules.
+ * <p>
+ * Designed for use in plugin contexts where logging and lifecycle control are needed.
+ */
 public class PomCommand {
     private final Model model;
     private String version;
     private final Log log;
     private final String baseDir;
 
+    /**
+     * Constructs a {@code PomCommand} for the specified base directory,
+     * loading the primary {@code pom.xml} into memory.
+     *
+     * @param baseDir the root directory containing the {@code pom.xml}
+     * @param log the Maven plugin logger for output messages
+     * @throws RuntimeException if the {@code pom.xml} cannot be read
+     */
     public PomCommand(String baseDir, Log log) {
         File pomFile = new File(baseDir, "pom.xml");
 
@@ -31,11 +45,23 @@ public class PomCommand {
         }
     }
 
+    /**
+     * Sets the version to be used for future updates.
+     *
+     * @param version the version string to apply (e.g. {@code "1.2.3"})
+     * @return this {@code PomCommand} instance for chaining
+     */
     public PomCommand setVersion(String version) {
         this.version = version;
         return this;
     }
 
+    /**
+     * Updates the main {@code pom.xml} file with the version previously set via {@link #setVersion(String)}.
+     *
+     * @return this {@code PomCommand} instance
+     * @throws MojoExecutionException if the POM file cannot be read or written
+     */
     public PomCommand updatePomVersion() throws MojoExecutionException {
         File pomFile = new File(baseDir, "pom.xml");
 
@@ -59,6 +85,13 @@ public class PomCommand {
         return this;
     }
 
+    /**
+     * Iterates through all declared modules in the parent {@code pom.xml} and updates
+     * their parent version references to match the current version.
+     *
+     * @return this {@code PomCommand} instance
+     * @throws MojoExecutionException if any module fails to update
+     */
     public PomCommand updateModules() throws MojoExecutionException {
         if (model.getModules() != null && !model.getModules().isEmpty()) {
             for (String module : model.getModules()) {
@@ -75,6 +108,13 @@ public class PomCommand {
         return this;
     }
 
+    /**
+     * Updates the parent version in a module's {@code pom.xml}.
+     * Called internally from {@link #updateModules()}.
+     *
+     * @param baseDir the directory where the module's {@code pom.xml} resides
+     * @throws MojoExecutionException if the module POM cannot be updated
+     */
     private void updateModuleParentVersion(String baseDir) throws MojoExecutionException {
         File pomFile = new File(baseDir, "pom.xml");
 

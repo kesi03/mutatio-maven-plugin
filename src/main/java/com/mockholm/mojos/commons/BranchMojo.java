@@ -18,6 +18,9 @@ import java.io.IOException;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicReference;
 
+/**
+ * Common methods used when creating branches such as feat,chore,fix ect.
+ */
 public class BranchMojo {
     private final MojoCommons commons;
 
@@ -25,6 +28,10 @@ public class BranchMojo {
         this.commons=commons;
     }
 
+    /**
+     * Start will create a new branch such as feat/jira-123456
+     * @param branchType
+     */
     public void executeStart(@NotNull BranchType branchType){
         commons.getLog().info("currentBranch: " + GitUtils.getCurrentBranch());
         commons.getLog().info("Current version: " + commons.getProject().getVersion());
@@ -100,7 +107,11 @@ public class BranchMojo {
         }
 
     }
-    
+
+    /**
+     * End will merge the branch to develop
+     * @param branchType
+     */
     public void executeEnd(@NotNull BranchType branchType){
         commons.getLog().info("currentBranch: " + GitUtils.getCurrentBranch());
         commons.getLog().info("Current version: " + commons.getProject().getVersion());
