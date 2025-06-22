@@ -290,7 +290,7 @@ public class GitCommand {
                     .anyMatch(ref -> ref.getName().equals("refs/remotes/origin/" + targetBranch));
 
             if (remoteExists) {
-                git.fetch().setRemote("ssh-remote").setTransportConfigCallback(sshCallback).call();
+                git.fetch().setTransportConfigCallback(sshCallback).call();
                 git.checkout()
                         .setCreateBranch(true)
                         .setName(targetBranch)
