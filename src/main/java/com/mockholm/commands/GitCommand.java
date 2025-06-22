@@ -10,10 +10,15 @@ import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.lib.Ref;
 import org.eclipse.jgit.transport.CredentialsProvider;
 import org.eclipse.jgit.transport.RefSpec;
+import org.eclipse.jgit.transport.URIish;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.URISyntaxException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
@@ -152,7 +157,16 @@ public class GitCommand {
     public GitCommand changeBranch(String targetBranch,GitConfiguration configuration) {
         if(GitCredentialUtils.isSSH(configuration.getScm())){
             info("using ssh");
-            TransportConfigCallback sshCallback=GitCredentialUtils.getSSHCallBack(configuration.getSettings().getServer(configuration.getServerKey()).getPrivateKey());
+            Path path = Paths.get( configuration.getSettings().getServer(configuration.getServerKey()).getPrivateKey());
+            if (!Files.exists(path)) {
+                throw new IllegalArgumentException("SSH key file does not exist: " +  configuration.getSettings().getServer(configuration.getServerKey()).getPrivateKey());
+            }else{
+                info("SSH key exists: "+configuration.getSettings().getServer(configuration.getServerKey()).getPrivateKey());
+            }
+            TransportConfigCallback sshCallback=GitCredentialUtils.getSSHCallBack(
+                    configuration.getSettings().getServer(configuration.getServerKey()).getPrivateKey(),
+                    configuration.getSettings().getServer(configuration.getServerKey()).getPassphrase()
+            );
             return changeBranch(targetBranch,sshCallback);
         }else{
             info("using credentials");
@@ -250,8 +264,22 @@ public class GitCommand {
                 return this;
             }
 
+            String remoteUrl = GitCredentialUtils.getRemoteUrl(git);
+
+            info("remoteUrl: "+remoteUrl);
+
+            String origin = GitCredentialUtils.convertOriginHttpsToSsh(git);
+
+            info("origin: "+origin);
+
+            RemoteAddCommand remoteAddCommand = git.remoteAdd();
+            remoteAddCommand.setName("ssh-remote");
+            remoteAddCommand.setUri(new URIish(origin));
+            remoteAddCommand.call();
+
+
             git.fetch()
-                    .setRemote("origin")
+                    .setRemote("ssh-remote")
                     .setTransportConfigCallback(sshCallback)
                     .call();
 
@@ -262,7 +290,7 @@ public class GitCommand {
                     .anyMatch(ref -> ref.getName().equals("refs/remotes/origin/" + targetBranch));
 
             if (remoteExists) {
-                git.fetch().setTransportConfigCallback(sshCallback).call();
+                git.fetch().setRemote("ssh-remote").setTransportConfigCallback(sshCallback).call();
                 git.checkout()
                         .setCreateBranch(true)
                         .setName(targetBranch)
@@ -277,6 +305,8 @@ public class GitCommand {
         } catch (IOException | GitAPIException e) {
             error("Failed to change branch to '" + targetBranch + "'", e);
             throw new RuntimeException("Failed to change branch", e);
+        } catch (URISyntaxException e) {
+            throw new RuntimeException(e);
         }
         return this;
     }
