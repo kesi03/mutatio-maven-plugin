@@ -56,8 +56,16 @@ public class GitCredentialUtils {
      * @return the configured TransportConfigCallback for use with JGit operations
      */
     public static TransportConfigCallback getSSHCallBack(String sshKeyPath){
-        return (TransportConfigCallback) transport ->
+        return transport -> {
+            if (transport instanceof SshTransport) {
                 ((SshTransport) transport).setSshSessionFactory(createSshSessionFactory(sshKeyPath));
+            } else {
+                // Optional: log a warning or fallback
+
+            }
+        };
+
+
     }
 
     /**

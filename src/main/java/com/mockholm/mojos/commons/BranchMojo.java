@@ -108,6 +108,7 @@ public class BranchMojo {
                     .addAllChanges()
                     .commit(commitMessage)
                     .gitInfo()
+                    .push(gitConfiguration)
                     .close();
 
         } catch (IOException e) {
@@ -207,6 +208,7 @@ public class BranchMojo {
                     .addAllChanges()
                     .commit(commitMessage)
                     .gitInfo()
+                    .push(gitConfiguration)
                     .close();
 
         } catch (IOException e) {

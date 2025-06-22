@@ -5,6 +5,7 @@ import com.mockholm.config.BranchType;
 import com.mockholm.models.MojoCommons;
 import com.mockholm.mojos.commons.BranchMojo;
 import org.apache.maven.plugin.AbstractMojo;
+import org.apache.maven.plugin.descriptor.PluginDescriptor;
 import org.apache.maven.plugins.annotations.Component;
 import org.apache.maven.plugins.annotations.LifecyclePhase;
 import org.apache.maven.plugins.annotations.Mojo;
@@ -24,8 +25,12 @@ public class FeatStartMojo extends AbstractMojo {
         @Parameter(property = "branch", name = "branch")
         private Branch branch = new Branch();
 
+        @Parameter(defaultValue = "${plugin}", readonly = true)
+        private PluginDescriptor pluginDescriptor;
 
         public void execute() {
+                String version = pluginDescriptor.getVersion();
+                getLog().info("Running plugin version: " + version);
                 new BranchMojo(new MojoCommons().
                         withLog(getLog()).
                         withBranch(branch).

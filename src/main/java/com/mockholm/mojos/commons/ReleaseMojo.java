@@ -81,6 +81,7 @@ public class ReleaseMojo {
                     }, pomCommand)
                     .addAllChanges()
                     .commit(commitMessage.get())
+                    .push(gitConfiguration)
                     .changeBranch(BranchType.DEVELOPMENT.getValue(),gitConfiguration)
                     .runPomCommands(cmd -> {
                         try {
@@ -112,6 +113,7 @@ public class ReleaseMojo {
                     .addAllChanges()
                     .commit(commitMessage.get())
                     .gitInfo()
+                    .push(gitConfiguration)
                     .close();
 
         } catch (IOException e) {
@@ -207,6 +209,7 @@ public class ReleaseMojo {
                     .changeBranch(mainOrMaster.getValue(),gitConfiguration)
                     .createTag("release-"+releaseVersion.toString())
                     .gitInfo()
+                    .push(gitConfiguration)
                     .close();
         } catch (IOException e) {
             throw new RuntimeException(e);

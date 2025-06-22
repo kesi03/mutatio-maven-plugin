@@ -1223,6 +1223,7 @@ public class GitCommand {
      * @throws RuntimeException if the push operation fails
      */
     public GitCommand push(GitConfiguration configuration) {
+        info("PUSH");
         if (GitCredentialUtils.isSSH(configuration.getScm())) {
             info("Using SSH for push");
             String privateKey = configuration.getSettings()
