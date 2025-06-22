@@ -281,7 +281,77 @@ public class GitCommand {
         return this;
     }
 
+    /**
+     * Creates a new Git branch with the given name. If the branch exists remotely on origin,
+     * it will be created locally and set to track the remote branch. If not, a local-only branch is created.
+     *
+     * @param branchName    the name of the branch to create
+     * @param configuration the Git configuration containing authentication and server details
+     * @return this GitCommand instance
+     * @throws RuntimeException if the branch creation fails
+     */
+    public GitCommand createBranch(String branchName, GitConfiguration configuration) {
+        try {
+            boolean localExists = git.branchList().call().stream()
+                    .anyMatch(ref -> ref.getName().equals("refs/heads/" + branchName));
 
+            if (localExists) {
+                info("Branch '" + branchName + "' already exists locally.");
+                return this;
+            }
+
+            if (GitCredentialUtils.isSSH(configuration.getScm())) {
+                info("Using SSH to fetch branch data: " + branchName);
+                String privateKey = configuration.getSettings()
+                        .getServer(configuration.getServerKey())
+                        .getPrivateKey();
+                TransportConfigCallback sshCallback = GitCredentialUtils.getSSHCallBack(privateKey);
+
+                git.fetch()
+                        .setRemote("origin")
+                        .setTransportConfigCallback(sshCallback)
+                        .call();
+            } else {
+                info("Using HTTPS credentials to fetch branch data: " + branchName);
+                String password = configuration.getSettings()
+                        .getServer(configuration.getServerKey())
+                        .getPassword();
+                CredentialsProvider credentialsProvider = GitCredentialUtils.getUserProvider(password);
+
+                git.fetch()
+                        .setRemote("origin")
+                        .setCredentialsProvider(credentialsProvider)
+                        .call();
+            }
+
+            boolean remoteExists = git.branchList()
+                    .setListMode(ListBranchCommand.ListMode.REMOTE)
+                    .call()
+                    .stream()
+                    .anyMatch(ref -> ref.getName().equals("refs/remotes/origin/" + branchName));
+
+            if (remoteExists) {
+                git.checkout()
+                        .setCreateBranch(true)
+                        .setName(branchName)
+                        .setUpstreamMode(CreateBranchCommand.SetupUpstreamMode.TRACK)
+                        .setStartPoint("origin/" + branchName)
+                        .call();
+                info("Created and checked out branch '" + branchName + "' tracking origin.");
+            } else {
+                git.checkout()
+                        .setCreateBranch(true)
+                        .setName(branchName)
+                        .call();
+                info("Created new local branch '" + branchName + "'.");
+            }
+
+        } catch (GitAPIException e) {
+            error("Failed to create branch: " + branchName, e);
+            throw new RuntimeException("Failed to create branch: " + branchName, e);
+        }
+        return this;
+    }
 
     /**
      * Creates a new Git branch with the given name. If the branch exists remotely on origin,
@@ -390,6 +460,41 @@ public class GitCommand {
     }
 
     /**
+     * Pushes the current local branch to the origin remote using the appropriate authentication strategy.
+     *
+     * @param configuration the Git configuration containing authentication and server details
+     * @return this GitCommand instance
+     * @throws RuntimeException if the push operation fails
+     */
+    public GitCommand pushBranch(GitConfiguration configuration) {
+        try {
+            String currentBranch = git.getRepository().getBranch();
+            RefSpec branchRefSpec = new RefSpec(currentBranch + ":" + currentBranch);
+
+            if (GitCredentialUtils.isSSH(configuration.getScm())) {
+                info("Using SSH to push branch: " + currentBranch);
+                String privateKey = configuration.getSettings()
+                        .getServer(configuration.getServerKey())
+                        .getPrivateKey();
+                TransportConfigCallback sshCallback = GitCredentialUtils.getSSHCallBack(privateKey);
+
+                return pushBranch(sshCallback);
+            } else {
+                info("Using HTTPS credentials to push branch: " + currentBranch);
+                String password = configuration.getSettings()
+                        .getServer(configuration.getServerKey())
+                        .getPassword();
+                CredentialsProvider credentialsProvider = GitCredentialUtils.getUserProvider(password);
+
+                return pushBranch(credentialsProvider);
+            }
+        } catch (IOException e) {
+            error("Failed to determine current branch", e);
+            throw new RuntimeException("Failed to push current branch", e);
+        }
+    }
+
+    /**
      * Pushes the current local branch to the origin remote using HTTPS authentication.
      *
      * @param credentialsProvider the credentials provider for remote access
@@ -458,6 +563,34 @@ public class GitCommand {
     }
 
     /**
+     * Pushes the specified tag to the origin remote using the appropriate authentication strategy.
+     *
+     * @param tag           the name of the tag to push
+     * @param configuration the Git configuration containing authentication and server details
+     * @return this GitCommand instance
+     * @throws RuntimeException if the push operation fails
+     */
+    public GitCommand pushTag(String tag, GitConfiguration configuration) {
+        RefSpec tagRefSpec = new RefSpec("refs/tags/" + tag + ":refs/tags/" + tag);
+
+        if (GitCredentialUtils.isSSH(configuration.getScm())) {
+            info("Using SSH to push tag: " + tag);
+            String privateKey = configuration.getSettings()
+                    .getServer(configuration.getServerKey())
+                    .getPrivateKey();
+            TransportConfigCallback sshCallback = GitCredentialUtils.getSSHCallBack(privateKey);
+            return pushTag(tag, sshCallback);
+        } else {
+            info("Using HTTPS credentials to push tag: " + tag);
+            String password = configuration.getSettings()
+                    .getServer(configuration.getServerKey())
+                    .getPassword();
+            CredentialsProvider credentialsProvider = GitCredentialUtils.getUserProvider(password);
+            return pushTag(tag, credentialsProvider);
+        }
+    }
+
+    /**
      * Pushes the specified tag to the origin remote using HTTPS authentication.
      *
      * @param tag the name of the tag to push
@@ -505,6 +638,64 @@ public class GitCommand {
         return this;
     }
 
+    /**
+     * Removes the specified tag both locally and remotely using the appropriate authentication strategy.
+     *
+     * @param tag           the name of the tag to remove
+     * @param configuration the Git configuration containing authentication and server details
+     * @return this GitCommand instance
+     * @throws RuntimeException if the tag removal fails
+     */
+    public GitCommand removeTag(String tag, GitConfiguration configuration) {
+        try {
+            List<String> deleted = git.tagDelete()
+                    .setTags(tag)
+                    .call();
+
+            if (deleted.isEmpty()) {
+                warn("Tag '" + tag + "' not found locally.");
+            } else {
+                info("Tag '" + tag + "' deleted locally.");
+            }
+
+            RefSpec refSpec = new RefSpec()
+                    .setSource(null)
+                    .setDestination("refs/tags/" + tag);
+
+            if (GitCredentialUtils.isSSH(configuration.getScm())) {
+                info("Using SSH to delete tag '" + tag + "' from origin");
+                String privateKey = configuration.getSettings()
+                        .getServer(configuration.getServerKey())
+                        .getPrivateKey();
+                TransportConfigCallback sshCallback = GitCredentialUtils.getSSHCallBack(privateKey);
+
+                git.push()
+                        .setRemote("origin")
+                        .setRefSpecs(refSpec)
+                        .setTransportConfigCallback(sshCallback)
+                        .call();
+            } else {
+                info("Using HTTPS credentials to delete tag '" + tag + "' from origin");
+                String password = configuration.getSettings()
+                        .getServer(configuration.getServerKey())
+                        .getPassword();
+                CredentialsProvider credentialsProvider = GitCredentialUtils.getUserProvider(password);
+
+                git.push()
+                        .setRemote("origin")
+                        .setRefSpecs(refSpec)
+                        .setCredentialsProvider(credentialsProvider)
+                        .call();
+            }
+
+            info("Tag '" + tag + "' deleted from origin.");
+        } catch (GitAPIException e) {
+            error("Failed to remove tag: " + tag, e);
+            throw new RuntimeException("Failed to remove tag: " + tag, e);
+        }
+
+        return this;
+    }
 
     /**
      * Removes the specified tag both locally and remotely using HTTPS authentication.
@@ -582,6 +773,62 @@ public class GitCommand {
         return this;
     }
 
+    /**
+     * Checks whether a branch with the given name exists locally or remotely on origin,
+     * performing a fetch operation using the appropriate authentication strategy.
+     *
+     * @param branchName    the name of the branch to check
+     * @param configuration the Git configuration containing authentication and server details
+     * @return {@code true} if the branch exists locally or on origin; {@code false} otherwise
+     * @throws RuntimeException if an error occurs during the check
+     */
+    public boolean checkIfBranchExists(String branchName, GitConfiguration configuration) {
+        try {
+            if (GitCredentialUtils.isSSH(configuration.getScm())) {
+                info("Using SSH to check existence of branch: " + branchName);
+                String privateKey = configuration.getSettings()
+                        .getServer(configuration.getServerKey())
+                        .getPrivateKey();
+                TransportConfigCallback sshCallback = GitCredentialUtils.getSSHCallBack(privateKey);
+
+                git.fetch()
+                        .setRemote("origin")
+                        .setTransportConfigCallback(sshCallback)
+                        .call();
+            } else {
+                info("Using HTTPS credentials to check existence of branch: " + branchName);
+                String password = configuration.getSettings()
+                        .getServer(configuration.getServerKey())
+                        .getPassword();
+                CredentialsProvider credentialsProvider = GitCredentialUtils.getUserProvider(password);
+
+                git.fetch()
+                        .setRemote("origin")
+                        .setCredentialsProvider(credentialsProvider)
+                        .call();
+            }
+
+            boolean localExists = git.branchList()
+                    .call()
+                    .stream()
+                    .anyMatch(ref -> ref.getName().equals("refs/heads/" + branchName));
+
+            boolean remoteExists = git.branchList()
+                    .setListMode(ListBranchCommand.ListMode.REMOTE)
+                    .call()
+                    .stream()
+                    .anyMatch(ref -> ref.getName().equals("refs/remotes/origin/" + branchName));
+
+            if (localExists) info("Branch '" + branchName + "' exists locally.");
+            if (remoteExists) info("Branch '" + branchName + "' exists on origin.");
+            if (!localExists && !remoteExists) warn("Branch '" + branchName + "' does not exist locally or remotely.");
+
+            return localExists || remoteExists;
+        } catch (GitAPIException e) {
+            error("Failed to check branch existence: " + branchName, e);
+            throw new RuntimeException("Failed to check branch existence: " + branchName, e);
+        }
+    }
 
     /**
      * Checks whether a branch with the given name exists locally or remotely on origin,
@@ -656,6 +903,66 @@ public class GitCommand {
         } catch (GitAPIException e) {
             error("Failed to check branch existence: " + branchName, e);
             throw new RuntimeException("Failed to check branch existence: " + branchName, e);
+        }
+    }
+
+    /**
+     * Checks whether a Git tag exists locally or on the origin remote using the appropriate authentication strategy.
+     *
+     * @param tagName       the name of the tag to check
+     * @param configuration the Git configuration containing authentication and server details
+     * @return {@code true} if the tag exists locally or remotely; {@code false} otherwise
+     * @throws RuntimeException if the check operation fails
+     */
+    public boolean checkIfTagExists(String tagName, GitConfiguration configuration) {
+        try {
+            boolean localExists = git.tagList()
+                    .call()
+                    .stream()
+                    .anyMatch(ref -> ref.getName().equals("refs/tags/" + tagName));
+
+            boolean remoteExists;
+
+            if (GitCredentialUtils.isSSH(configuration.getScm())) {
+                info("Using SSH to check existence of tag: " + tagName);
+                String privateKey = configuration.getSettings()
+                        .getServer(configuration.getServerKey())
+                        .getPrivateKey();
+                TransportConfigCallback sshCallback = GitCredentialUtils.getSSHCallBack(privateKey);
+
+                Collection<Ref> remoteTags = git.lsRemote()
+                        .setRemote("origin")
+                        .setTags(true)
+                        .setTransportConfigCallback(sshCallback)
+                        .call();
+
+                remoteExists = remoteTags.stream()
+                        .anyMatch(ref -> ref.getName().equals("refs/tags/" + tagName));
+            } else {
+                info("Using HTTPS credentials to check existence of tag: " + tagName);
+                String password = configuration.getSettings()
+                        .getServer(configuration.getServerKey())
+                        .getPassword();
+                CredentialsProvider credentialsProvider = GitCredentialUtils.getUserProvider(password);
+
+                Collection<Ref> remoteTags = git.lsRemote()
+                        .setRemote("origin")
+                        .setTags(true)
+                        .setCredentialsProvider(credentialsProvider)
+                        .call();
+
+                remoteExists = remoteTags.stream()
+                        .anyMatch(ref -> ref.getName().equals("refs/tags/" + tagName));
+            }
+
+            if (localExists) info("Tag '" + tagName + "' exists locally.");
+            if (remoteExists) info("Tag '" + tagName + "' exists on origin.");
+            if (!localExists && !remoteExists) warn("Tag '" + tagName + "' does not exist locally or remotely.");
+
+            return localExists || remoteExists;
+        } catch (GitAPIException e) {
+            error("Failed to check tag existence: " + tagName, e);
+            throw new RuntimeException("Failed to check tag existence: " + tagName, e);
         }
     }
 
@@ -839,6 +1146,32 @@ public class GitCommand {
         return this;
     }
 
+    /**
+     * Pulls changes from the origin remote using the appropriate authentication strategy.
+     *
+     * @param configuration the Git configuration containing authentication and server details
+     * @return this GitCommand instance
+     * @throws RuntimeException if the pull operation fails
+     */
+    public GitCommand pull(GitConfiguration configuration) {
+        if (GitCredentialUtils.isSSH(configuration.getScm())) {
+            info("Using SSH for pull");
+            String privateKey = configuration.getSettings()
+                    .getServer(configuration.getServerKey())
+                    .getPrivateKey();
+            TransportConfigCallback sshCallback =
+                    GitCredentialUtils.getSSHCallBack(privateKey);
+            return pull(sshCallback);
+        } else {
+            info("Using HTTPS credentials for pull");
+            String password = configuration.getSettings()
+                    .getServer(configuration.getServerKey())
+                    .getPassword();
+            CredentialsProvider credentialsProvider =
+                    GitCredentialUtils.getUserProvider(password);
+            return pull(credentialsProvider);
+        }
+    }
 
     /**
      * Pulls changes from the origin remote using HTTPS authentication.
@@ -883,6 +1216,33 @@ public class GitCommand {
     }
 
     /**
+     * Pushes all changes from the current repository to the origin remote using the appropriate authentication strategy.
+     *
+     * @param configuration the Git configuration containing authentication and server details
+     * @return this GitCommand instance
+     * @throws RuntimeException if the push operation fails
+     */
+    public GitCommand push(GitConfiguration configuration) {
+        if (GitCredentialUtils.isSSH(configuration.getScm())) {
+            info("Using SSH for push");
+            String privateKey = configuration.getSettings()
+                    .getServer(configuration.getServerKey())
+                    .getPrivateKey();
+            TransportConfigCallback sshCallback =
+                    GitCredentialUtils.getSSHCallBack(privateKey);
+            return push(sshCallback);
+        } else {
+            info("Using HTTPS credentials for push");
+            String password = configuration.getSettings()
+                    .getServer(configuration.getServerKey())
+                    .getPassword();
+            CredentialsProvider credentialsProvider =
+                    GitCredentialUtils.getUserProvider(password);
+            return push(credentialsProvider);
+        }
+    }
+
+    /**
      * Pushes all changes from the current repository to the origin remote using HTTPS authentication.
      *
      * @param credentialsProvider the credentials provider for remote access
@@ -922,6 +1282,33 @@ public class GitCommand {
             throw new RuntimeException("Failed to push changes", e);
         }
         return this;
+    }
+
+    /**
+     * Fetches changes from the origin remote using the appropriate authentication strategy.
+     *
+     * @param configuration the Git configuration containing authentication and server details
+     * @return this GitCommand instance
+     * @throws RuntimeException if the fetch operation fails
+     */
+    public GitCommand fetch(GitConfiguration configuration) {
+        if (GitCredentialUtils.isSSH(configuration.getScm())) {
+            info("Using SSH for fetch");
+            String privateKey = configuration.getSettings()
+                    .getServer(configuration.getServerKey())
+                    .getPrivateKey();
+            TransportConfigCallback sshCallback =
+                    GitCredentialUtils.getSSHCallBack(privateKey);
+            return fetch(sshCallback);
+        } else {
+            info("Using HTTPS credentials for fetch");
+            String password = configuration.getSettings()
+                    .getServer(configuration.getServerKey())
+                    .getPassword();
+            CredentialsProvider credentialsProvider =
+                    GitCredentialUtils.getUserProvider(password);
+            return fetch(credentialsProvider);
+        }
     }
 
     /**
@@ -986,6 +1373,34 @@ public class GitCommand {
             throw new RuntimeException("Failed to delete branch", e);
         }
         return this;
+    }
+
+    /**
+     * Deletes the specified branch from the origin remote using the appropriate authentication strategy.
+     *
+     * @param branchName     the name of the branch to delete remotely
+     * @param configuration  the Git configuration containing authentication and server details
+     * @return this GitCommand instance
+     * @throws RuntimeException if the branch deletion fails
+     */
+    public GitCommand deleteRemoteBranch(String branchName, GitConfiguration configuration) {
+        RefSpec refSpec = new RefSpec(":" + branchName);
+
+        if (GitCredentialUtils.isSSH(configuration.getScm())) {
+            info("Using SSH to delete remote branch: " + branchName);
+            String privateKey = configuration.getSettings()
+                    .getServer(configuration.getServerKey())
+                    .getPrivateKey();
+            TransportConfigCallback sshCallback = GitCredentialUtils.getSSHCallBack(privateKey);
+            return deleteRemoteBranch(branchName, sshCallback);
+        } else {
+            info("Using HTTPS credentials to delete remote branch: " + branchName);
+            String password = configuration.getSettings()
+                    .getServer(configuration.getServerKey())
+                    .getPassword();
+            CredentialsProvider credentialsProvider = GitCredentialUtils.getUserProvider(password);
+            return deleteRemoteBranch(branchName, credentialsProvider);
+        }
     }
 
     /**
@@ -1055,6 +1470,34 @@ public class GitCommand {
             throw new RuntimeException("Failed to delete local tag", e);
         }
         return this;
+    }
+
+    /**
+     * Deletes the specified tag from the origin remote using the appropriate authentication strategy.
+     *
+     * @param tagName       the name of the tag to delete remotely
+     * @param configuration the Git configuration containing authentication and server details
+     * @return this GitCommand instance
+     * @throws RuntimeException if the tag deletion fails
+     */
+    public GitCommand deleteRemoteTag(String tagName, GitConfiguration configuration) {
+        RefSpec refSpec = new RefSpec("refs/tags/" + tagName + ":");
+
+        if (GitCredentialUtils.isSSH(configuration.getScm())) {
+            info("Using SSH to delete remote tag: " + tagName);
+            String privateKey = configuration.getSettings()
+                    .getServer(configuration.getServerKey())
+                    .getPrivateKey();
+            TransportConfigCallback sshCallback = GitCredentialUtils.getSSHCallBack(privateKey);
+            return deleteRemoteTag(tagName, sshCallback);
+        } else {
+            info("Using HTTPS credentials to delete remote tag: " + tagName);
+            String password = configuration.getSettings()
+                    .getServer(configuration.getServerKey())
+                    .getPassword();
+            CredentialsProvider credentialsProvider = GitCredentialUtils.getUserProvider(password);
+            return deleteRemoteTag(tagName, credentialsProvider);
+        }
     }
 
     /**
