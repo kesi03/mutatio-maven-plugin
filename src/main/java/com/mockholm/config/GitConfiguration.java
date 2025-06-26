@@ -7,6 +7,7 @@ public class GitConfiguration {
     String serverKey;
     Scm scm;
     Settings settings;
+    boolean pushChanges;
 
     public String getServerKey() {
         return serverKey;
@@ -48,4 +49,16 @@ public class GitConfiguration {
         return this;
     }
 
+    public boolean isPushChanges() {
+        return pushChanges;
+    }
+
+    public GitConfiguration withPushChanges(boolean pushChanges) {
+        this.pushChanges = pushChanges;
+        return this;
+    }
+
+    public void setPushChanges(boolean pushChanges) {
+        this.pushChanges = pushChanges;
+    }
 }

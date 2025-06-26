@@ -15,6 +15,8 @@ public class MojoCommons {
 
     private String repoIdentity;
 
+    private boolean pushChanges;
+
     public Log getLog() {
         return log;
     }
@@ -78,5 +80,18 @@ public class MojoCommons {
 
     public void setRepoIdentity(String repoIdentity) {
         this.repoIdentity = repoIdentity;
+    }
+
+    public boolean isPushChanges() {
+        return pushChanges;
+    }
+
+    public MojoCommons withPushChanges(boolean pushChanges) {
+        this.pushChanges = pushChanges;
+        return this;
+    }
+
+    public void setPushChanges(boolean pushChanges) {
+        this.pushChanges = pushChanges;
     }
 }

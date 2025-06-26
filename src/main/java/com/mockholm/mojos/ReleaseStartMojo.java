@@ -53,9 +53,17 @@ public class ReleaseStartMojo extends AbstractMojo {
     @Parameter(name="versionIdentifier", property = "versionIdentifier", defaultValue = "SNAPSHOT" , required = false, readonly = false)
     private VersionIdentifier versionIdentifier;
 
+     /**
+     * Flag to determine whether to push changes to the remote repository after starting the archive branch.
+     * Default is true, meaning changes will be pushed.
+     */
+    @Parameter(property = "pushChanges", name ="pushChanges", defaultValue = "true")
+    private boolean pushChanges;
+
     public void execute() {
         new ReleaseMojo(new MojoCommons()
                 .withLog(getLog())
+                .withPushChanges(pushChanges)
                 .withRepoIdentity(repoIdentity)
                 .withProject(project)
                 .withSettings(settings))

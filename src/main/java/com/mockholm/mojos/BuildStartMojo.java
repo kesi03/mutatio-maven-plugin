@@ -36,10 +36,15 @@ public class BuildStartMojo extends AbstractMojo {
     @Parameter(property = "repoIdentity", name = "repoIdentity")
     private String repoIdentity;
 
+    @Parameter(property = "pushChanges", name ="pushChanges", defaultValue = "true")
+    private boolean pushChanges;
+
+
     public void execute() {
         new BranchMojo(new MojoCommons()
                 .withLog(getLog())
                 .withRepoIdentity(repoIdentity)
+                .withPushChanges(pushChanges)
                 .withProject(project)
                 .withSettings(settings))
                 .executeStart(BranchType.BUILD);

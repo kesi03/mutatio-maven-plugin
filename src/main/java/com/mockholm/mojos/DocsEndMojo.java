@@ -40,9 +40,17 @@ public class DocsEndMojo extends AbstractMojo {
     @Parameter(property = "repoIdentity", name = "repoIdentity")
     private String repoIdentity;
 
+     /**
+     * Flag to determine whether to push changes to the remote repository after starting the archive branch.
+     * Default is true, meaning changes will be pushed.
+     */
+    @Parameter(property = "pushChanges", name ="pushChanges", defaultValue = "true")
+    private boolean pushChanges;
+
     public void execute() throws MojoExecutionException, MojoFailureException {
         new BranchMojo(new MojoCommons().
                 withLog(getLog()).
+                withPushChanges(pushChanges).
                 withRepoIdentity(repoIdentity).
                 withProject(project).
                 withSettings(settings))

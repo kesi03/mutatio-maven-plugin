@@ -40,9 +40,14 @@ public class ChoreEndMojo extends AbstractMojo {
         @Parameter(property = "repoIdentity", name = "repoIdentity")
         private String repoIdentity;
 
+        @Parameter(property = "pushChanges", name ="pushChanges", defaultValue = "true")
+        private boolean pushChanges;
+
+
         public void execute() throws MojoExecutionException, MojoFailureException {
                 new BranchMojo(new MojoCommons().
                         withLog(getLog()).
+                        withPushChanges(pushChanges).
                         withRepoIdentity(repoIdentity).
                         withProject(project).
                         withSettings(settings))

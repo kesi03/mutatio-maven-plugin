@@ -31,6 +31,9 @@ public class ArchiveEndMojo extends AbstractMojo {
     @Parameter(property = "repoIdentity", name = "repoIdentity")
     private String repoIdentity;
 
+    @Parameter(property = "pushChanges", name ="pushChanges", defaultValue = "true")
+    private boolean pushChanges;
+
     /**
      * The settings for the Maven build, which may include repository configurations.
      * This is used to access settings defined in the Maven settings.xml file.
@@ -43,6 +46,7 @@ public class ArchiveEndMojo extends AbstractMojo {
                 .withLog(getLog())
                 .withProject(project)
                 .withSettings(settings)
+                .withPushChanges(pushChanges)
                 .withRepoIdentity(repoIdentity)
         ).executeEnd(BranchType.ARCHIVE);
     }

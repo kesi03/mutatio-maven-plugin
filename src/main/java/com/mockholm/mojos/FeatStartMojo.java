@@ -46,11 +46,19 @@ public class FeatStartMojo extends AbstractMojo {
         @Parameter(defaultValue = "${plugin}", readonly = true)
         private PluginDescriptor pluginDescriptor;
 
+         /**
+     * Flag to determine whether to push changes to the remote repository after starting the archive branch.
+     * Default is true, meaning changes will be pushed.
+     */
+    @Parameter(property = "pushChanges", name ="pushChanges", defaultValue = "true")
+    private boolean pushChanges;
+
         public void execute() {
                 String version = pluginDescriptor.getVersion();
                 getLog().info("Running plugin version: " + version);
                 new BranchMojo(new MojoCommons().
                         withLog(getLog()).
+                        withPushChanges(pushChanges).
                         withRepoIdentity(repoIdentity).
                         withProject(project).
                         withSettings(settings)).executeStart(BranchType.FEATURE);

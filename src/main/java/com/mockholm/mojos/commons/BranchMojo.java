@@ -108,6 +108,14 @@ public class BranchMojo {
                     .addAllChanges()
                     .commit(commitMessage)
                     .gitInfo()
+                    .when(command -> {
+                        if(!commons.isPushChanges()){
+                            gitConfiguration.setPushChanges(false);
+                            commons.getLog().warn("Skipping push");
+                            command.skipNext();
+                        }
+                    })
+                    .push(gitConfiguration)
                     .push(gitConfiguration)
                     .close();
 
@@ -180,8 +188,9 @@ public class BranchMojo {
 
             PomCommand pomCommand = new PomCommand(baseDir, commons.getLog());
             AtomicReference<String> developmentVersion= new AtomicReference<>("");
-            new GitCommand(commons.getLog())
-                    .changeBranch(BranchType.DEVELOPMENT.getValue(),gitConfiguration)
+            GitCommand gitCommand=new GitCommand(commons.getLog());
+
+                    gitCommand.changeBranch(BranchType.DEVELOPMENT.getValue(),gitConfiguration)
                     .runPomCommands(cmd -> {
                         developmentVersion.set(PomUtils.getVersion(baseDir));
                         commons.getLog().info("version: "+developmentVersion);
@@ -208,6 +217,13 @@ public class BranchMojo {
                     .addAllChanges()
                     .commit(commitMessage)
                     .gitInfo()
+                    .when(command -> {
+                        if(!commons.isPushChanges()){
+                            gitConfiguration.setPushChanges(false);
+                            commons.getLog().warn("Skipping push");
+                            command.skipNext();
+                        }
+                    })
                     .push(gitConfiguration)
                     .close();
 

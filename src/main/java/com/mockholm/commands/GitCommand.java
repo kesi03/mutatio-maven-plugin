@@ -1,9 +1,7 @@
 package com.mockholm.commands;
 
-import com.mockholm.config.BranchType;
 import com.mockholm.config.GitConfiguration;
 import com.mockholm.utils.GitCredentialUtils;
-import org.apache.maven.model.Scm;
 import org.apache.maven.plugin.logging.Log;
 import org.eclipse.jgit.api.*;
 import org.eclipse.jgit.api.errors.GitAPIException;
@@ -19,9 +17,6 @@ import org.jetbrains.annotations.NotNull;
 import java.io.File;
 import java.io.IOException;
 import java.net.URISyntaxException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
@@ -40,6 +35,17 @@ import static com.mockholm.utils.GitCredentialUtils.SSH_REMOTE;
 public class GitCommand {
     private final Git git;
     private final Log log;
+
+    private boolean shouldSkipNext = false;
+
+    public GitCommand skipNext() {
+        this.shouldSkipNext = true;
+        return this;
+    }
+
+    public boolean shouldSkip() {
+        return this.shouldSkipNext;
+    }
 
 
     /**
@@ -1219,6 +1225,9 @@ public class GitCommand {
      */
     public GitCommand push(GitConfiguration configuration) {
         info("PUSH");
+        if(!configuration.isPushChanges()){
+            return this;
+        }
         if (GitCredentialUtils.isSSH(configuration.getScm())) {
             return push(transport -> {
                 if (transport instanceof SshTransport) {
@@ -1673,6 +1682,11 @@ public class GitCommand {
             throw new RuntimeException("Failed to merge branches", e);
         }
 
+        return this;
+    }
+
+    public GitCommand when(Consumer<GitCommand> gitCommandConsumer){
+        gitCommandConsumer.accept(this);
         return this;
     }
 

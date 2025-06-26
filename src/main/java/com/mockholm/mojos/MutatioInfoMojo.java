@@ -84,7 +84,16 @@ public class MutatioInfoMojo extends AbstractMojo
         return versionIdentifier;
     }
 
+    @Parameter(property = "pushChanges", name ="pushChanges", defaultValue = "true")
+    private boolean pushChanges;
+
     public void execute() throws MojoExecutionException {
+        if(pushChanges){
+            getLog().info("push");
+        }else{
+            getLog().info("push not");
+        }
+
         getLog().info("currentBranch: "+ GitUtils.getCurrentBranch());
         getLog().info("versionIdentifier: "+versionIdentifier);
         getLog().info("releaseType: "+releaseType);

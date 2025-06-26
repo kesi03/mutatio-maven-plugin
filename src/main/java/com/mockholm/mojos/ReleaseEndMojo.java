@@ -54,10 +54,18 @@ public class ReleaseEndMojo extends AbstractMojo {
     @Parameter(property = "mainOrMaster", name="mainOrMaster", defaultValue = "MASTER")
     private BranchType mainOrMaster;
 
+     /**
+     * Flag to determine whether to push changes to the remote repository after starting the archive branch.
+     * Default is true, meaning changes will be pushed.
+     */
+    @Parameter(property = "pushChanges", name ="pushChanges", defaultValue = "true")
+    private boolean pushChanges;
+
     public void execute() throws MojoExecutionException, MojoFailureException {
 
         new ReleaseMojo(new MojoCommons()
                 .withLog(getLog())
+                .withPushChanges(pushChanges)
                 .withRepoIdentity(repoIdentity)
                 .withProject(project)
                 .withSettings(settings))
