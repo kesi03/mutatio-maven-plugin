@@ -19,30 +19,73 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Optional;
 
+/**
+ * This Mojo is used to update the Maven settings.xml file with server credentials.
+ * It can add, update, or remove server entries based on the provided parameters.
+ */     
 @Mojo(name = "update-settings", defaultPhase = LifecyclePhase.VALIDATE)
 public class UpdateSettingsMojo extends AbstractMojo {
-
+        /**
+         * The Maven project being built.
+         * This is used to access project properties and configuration.
+         */
     @Parameter(defaultValue = "${project}", readonly = true, required = true)
     private MavenProject project;
 
+        /**
+         * The settings for the Maven build, which may include repository configurations.
+         * This is used to access settings defined in the Maven settings.xml file.
+         */
+    @Parameter(defaultValue = "${settings}", readonly = true, required = true)
+    private Settings settings;
+
+        /**
+         * The ID of the server to be added, updated, or removed.
+         * This is typically the name of the server as defined in the settings.xml file.
+         */
     @Parameter(property = "id")
     private String id;
 
-    @Parameter(property = "userName")
-    private String userName;
-
+        /**
+         * The password for the server.
+         * This is used to authenticate with the server.
+         */
     @Parameter(property = "password")
     private String password;
 
+        /**
+         * The privateKey.
+         * This is used to authenticate with the server.
+         */
     @Parameter(property = "privateKey")
     private String privateKey;
 
+        /**
+         * The ssh key passphrase.
+         * This is used to authenticate with the server.
+         */
     @Parameter(property = "passphrase")
     private String passphrase;
 
+        /**
+         * The username for the server.
+         * This is used to authenticate with the server.
+         */
+    @Parameter(property = "userName")
+    private String userName;
+
+        /**
+         * The action to be performed on the server.
+         * This determines whether to read, add, update, or remove the server entry.
+         */
     @Parameter(property = "action", defaultValue = "READ")
     private SettingsAction action;
 
+        /**
+         * Executes the Mojo to update the Maven settings.xml file.
+         * It reads the settings, performs the specified action (READ, ADD, UPDATE, REMOVE),
+         * and writes the changes back to the settings.xml file.
+         */
     public void execute() {
         if (project.isExecutionRoot()) {
             Path settingsPath = Paths.get(System.getProperty("user.home"), ".m2", "settings.xml");

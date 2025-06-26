@@ -40,7 +40,7 @@ public class BranchMojo {
         SemanticVersion currentVersion = SemanticVersion.parse(commons.getProject().getVersion());
 
         // Use Optional to provide a default value if branch name is null or blank
-        String branchName = Optional.ofNullable(commons.getBranch().getName())
+        String branchName = Optional.ofNullable(commons.getRepoIdentity())
                 .filter(name -> !name.isBlank())
                 .orElse("123456");
 
@@ -61,7 +61,7 @@ public class BranchMojo {
                 currentVersion.getBuild());
 
 
-        commons.getLog().info("CHORE version: " + featVersion.toString());
+        commons.getLog().info(branchType+" version: " + featVersion.toString());
 
         CommitDescription description = new CommitDescription.Builder()
                 .action(BranchAction.START)

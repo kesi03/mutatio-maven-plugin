@@ -13,6 +13,8 @@ public class MojoCommons {
 
     private Branch branch;
 
+    private String repoIdentity;
+
     public Log getLog() {
         return log;
     }
@@ -63,5 +65,18 @@ public class MojoCommons {
 
     public void setSettings(Settings settings) {
         this.settings = settings;
+    }
+
+    public String getRepoIdentity() {
+        return repoIdentity;
+    }
+
+    public MojoCommons withRepoIdentity(String repoIdentity) {
+        this.repoIdentity = repoIdentity;
+        return this;
+    }
+
+    public void setRepoIdentity(String repoIdentity) {
+        this.repoIdentity = repoIdentity;
     }
 }

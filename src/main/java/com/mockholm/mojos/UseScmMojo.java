@@ -8,7 +8,6 @@ import org.apache.maven.plugins.annotations.Parameter;
 import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.LifecyclePhase;
 import org.apache.maven.plugin.AbstractMojo;
-import org.apache.maven.settings.Server;
 import org.apache.maven.settings.Settings;
 import org.eclipse.jgit.api.*;
 import org.eclipse.jgit.api.errors.GitAPIException;
@@ -18,7 +17,6 @@ import org.eclipse.jgit.lib.ObjectReader;
 import org.eclipse.jgit.lib.Ref;
 import org.eclipse.jgit.lib.Repository;
 import org.eclipse.jgit.transport.SshTransport;
-import org.eclipse.jgit.transport.URIish;
 import org.eclipse.jgit.transport.sshd.SshdSessionFactory;
 import org.eclipse.jgit.treewalk.CanonicalTreeParser;
 
@@ -31,15 +29,31 @@ import java.util.function.Supplier;
 
 import static com.mockholm.utils.GitCredentialUtils.SSH_REMOTE;
 
+/**
+ * This Mojo is used to interact with the SCM (Source Control Management) system of the Maven project.
+ * It retrieves SCM details and performs operations like pulling changes from the repository.
+ * Mainly used for debugging and verifying SCM configurations.
+ */
 @Mojo(name = "use-scm", defaultPhase = LifecyclePhase.VALIDATE)
 public class UseScmMojo extends AbstractMojo {
-
+    /**
+     * The Maven project being built.
+     * This is used to access project properties and configuration.
+     */
     @Parameter(defaultValue = "${project}", readonly = true, required = true)
     private MavenProject project;
 
+    /**
+     * The settings for the Maven build, which may include repository configurations.
+     * This is used to access settings defined in the Maven settings.xml file.
+     */
     @Parameter( defaultValue = "${settings}", readonly = true )
     private Settings settings;
 
+    /**
+     * The identity of the repository used to determine the branch to start.
+     * This is typically the name of the repository or a unique identifier.
+     */
     public void execute() {
         Scm scm= project.getScm();
         if(scm!=null){
@@ -81,7 +95,14 @@ public class UseScmMojo extends AbstractMojo {
 
     }
 
-
+    /**
+     * Pulls the latest changes from the remote repository using SSH.
+     *
+     * @param sshSessionFactory The SSH session factory for secure connections.
+     * @param log               The Maven log to output messages.
+     * @throws IOException      If an I/O error occurs while accessing the repository.
+     * @throws GitAPIException  If an error occurs while performing Git operations.
+     */
     private void pull(SshdSessionFactory sshSessionFactory, Log log) throws IOException, GitAPIException {
 
         try (Git git = Git.open(new File("."))) {
@@ -136,6 +157,12 @@ public class UseScmMojo extends AbstractMojo {
         }
     }
 
+    /**
+     * Retrieves the list of references (branches) from the Git repository using the provided SSH session factory.
+     *
+     * @param sshSessionFactory The SSH session factory for secure connections.
+     * @return A list of references (branches) in the repository.
+     */
     private static List<Ref> getRefs(SshdSessionFactory sshSessionFactory) {
         TransportConfigCallback transportConfigCallback = transport -> {
             if (transport instanceof SshTransport) {
