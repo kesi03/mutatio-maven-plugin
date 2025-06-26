@@ -1,19 +1,32 @@
 package com.mockholm.utils;
 
+import com.mockholm.config.GitConfiguration;
 import org.apache.maven.model.Scm;
+import org.apache.maven.settings.Server;
+import org.apache.maven.settings.Settings;
 import org.eclipse.jgit.api.Git;
+import org.eclipse.jgit.api.RemoteAddCommand;
 import org.eclipse.jgit.api.TransportConfigCallback;
+import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.transport.*;
 import org.eclipse.jgit.transport.ssh.jsch.JschConfigSessionFactory;
 import org.eclipse.jgit.transport.ssh.jsch.OpenSshConfig;
+import org.eclipse.jgit.transport.sshd.KeyPasswordProvider;
+import org.eclipse.jgit.transport.sshd.SshdSessionFactory;
+import org.eclipse.jgit.transport.sshd.SshdSessionFactoryBuilder;
 import org.eclipse.jgit.util.FS;
 import com.jcraft.jsch.*;
+
+import java.io.File;
+import java.net.URISyntaxException;
 
 /**
  * Utility class for handling Git authentication and repository connection details.
  * Supports both SSH and HTTPS configurations, derived from Maven SCM metadata.
  */
 public class GitCredentialUtils {
+
+    public static final String SSH_REMOTE = "ssh-remote";
 
     /**
      * Extracts the raw Git URL from the given Maven SCM object.
@@ -258,5 +271,104 @@ public class GitCredentialUtils {
      */
     public static String getRemoteUrl(Git git) {
         return getRemoteUrl(git, "origin");
+    }
+
+
+    /**
+     * Adds a new SSH remote to the given Git repository using the SSH URL
+     * converted from the existing HTTPS origin.
+     *
+     * @param git the Git repository instance
+     * @throws URISyntaxException if the SSH URI is malformed
+     * @throws GitAPIException if the remote addition fails
+     */
+    public static void addSSHRemote(Git git) throws URISyntaxException, GitAPIException {
+        String origin = GitCredentialUtils.convertOriginHttpsToSsh(git);
+        RemoteAddCommand remoteAddCommand = git.remoteAdd();
+        remoteAddCommand.setName(SSH_REMOTE);
+        remoteAddCommand.setUri(new URIish(origin));
+        remoteAddCommand.call();
+    }
+
+
+    /**
+     * Retrieves the configured server credentials from the provided Git configuration.
+     *
+     * @param configuration the Git configuration containing settings and server key
+     * @return the Server configuration for the given key
+     */
+    public static Server getServer(GitConfiguration configuration) {
+        return configuration.getSettings().getServer(configuration.getServerKey());
+    }
+
+
+    /**
+     * Retrieves the configured server credentials from Maven settings.
+     *
+     * @param serverKey the ID of the server in settings.xml
+     * @param settings the Maven settings object
+     * @return the Server configuration for the given key
+     */
+    public static Server getServer(String serverKey, Settings settings) {
+        return settings.getServer(serverKey);
+    }
+
+    /**
+     * Builds an SshdSessionFactory using the server credentials from the provided Git configuration.
+     *
+     * @param configuration the Git configuration containing settings and server key
+     * @return a configured SshdSessionFactory instance
+     */
+    public static SshdSessionFactory getSshdSessionFactory(GitConfiguration configuration) {
+        return getSshdSessionFactory(getServer(configuration));
+    }
+
+
+    /**
+     * Builds an SshdSessionFactory using the server credentials identified by the given key.
+     *
+     * @param serverKey the ID of the server in settings.xml
+     * @param settings the Maven settings object
+     * @return a configured SshdSessionFactory instance
+     */
+    public static SshdSessionFactory getSshdSessionFactory(String serverKey, Settings settings) {
+        return getSshdSessionFactory(getServer(serverKey, settings));
+    }
+
+    /**
+     * Builds an SshdSessionFactory using the provided server credentials.
+     * This factory supports passphrase-protected SSH keys.
+     *
+     * @param server the Maven server configuration containing the SSH passphrase
+     * @return a configured SshdSessionFactory instance
+     */
+    public static SshdSessionFactory getSshdSessionFactory(Server server) {
+        return new SshdSessionFactoryBuilder()
+                .setHomeDirectory(new File(System.getProperty("user.home")))
+                .setSshDirectory(new File(System.getProperty("user.home"), ".ssh"))
+                .setKeyPasswordProvider(credentialsProvider -> new KeyPasswordProvider() {
+                    private int attempts = 1;
+
+                    @Override
+                    public void setAttempts(int i) {
+                        this.attempts = i;
+                    }
+
+                    @Override
+                    public int getAttempts() {
+                        return attempts;
+                    }
+
+                    @Override
+                    public char[] getPassphrase(URIish uri, int attempt) {
+                        return server.getPassphrase().toCharArray();
+                    }
+
+                    @Override
+                    public boolean keyLoaded(URIish uri, int attempt, Exception error) {
+                        return false;
+                    }
+                })
+                .build(null);
     }
 }
