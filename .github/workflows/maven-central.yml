@@ -57,6 +57,4 @@ jobs:
 
       - name: Extract Artifact ID
         id: extract-artifact-id
-        run: |
-          ARTIFACT_ID=$(grep -oP '(?<=Uploading to central: ).*' mvn_output.txt | head -n 1 | awk '{print $NF}')
-          echo "ARTIFACT_ID=$ARTIFACT_ID" >> $GITHUB_ENV
+        run: cat mvn_output.txt
