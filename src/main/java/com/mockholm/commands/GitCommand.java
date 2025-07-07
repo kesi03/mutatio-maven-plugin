@@ -456,9 +456,11 @@ public class GitCommand {
      * @return this GitCommand instance
      * @throws RuntimeException if the push operation fails
      */
+    @SuppressWarnings("unused")
     public GitCommand pushBranch(GitConfiguration configuration) {
         try {
             String currentBranch = git.getRepository().getBranch();
+            
             RefSpec branchRefSpec = new RefSpec(currentBranch + ":" + currentBranch);
 
             if (GitCredentialUtils.isSSH(configuration.getScm())) {
@@ -562,9 +564,8 @@ public class GitCommand {
      * @return this GitCommand instance
      * @throws RuntimeException if the push operation fails
      */
+    
     public GitCommand pushTag(String tag, GitConfiguration configuration) {
-        RefSpec tagRefSpec = new RefSpec("refs/tags/" + tag + ":refs/tags/" + tag);
-
         if (GitCredentialUtils.isSSH(configuration.getScm())) {
             info("Using SSH to push tag: " + tag);
             return pushTag(tag, transport -> {
@@ -651,10 +652,6 @@ public class GitCommand {
             } else {
                 info("Tag '" + tag + "' deleted locally.");
             }
-
-            RefSpec refSpec = new RefSpec()
-                    .setSource(null)
-                    .setDestination("refs/tags/" + tag);
 
             if (GitCredentialUtils.isSSH(configuration.getScm())) {
                 info("Using SSH to delete tag '" + tag + "' from origin");
@@ -1407,7 +1404,6 @@ public class GitCommand {
      * @throws RuntimeException if the branch deletion fails
      */
     public GitCommand deleteRemoteBranch(String branchName, GitConfiguration configuration) {
-        RefSpec refSpec = new RefSpec(":" + branchName);
         if (GitCredentialUtils.isSSH(configuration.getScm())) {
             info("Using SSH to delete remote branch: " + branchName);
             return deleteRemoteBranch(branchName, transport -> {
@@ -1505,7 +1501,6 @@ public class GitCommand {
      * @throws RuntimeException if the tag deletion fails
      */
     public GitCommand deleteRemoteTag(String tagName, GitConfiguration configuration) {
-        RefSpec refSpec = new RefSpec("refs/tags/" + tagName + ":");
         if (GitCredentialUtils.isSSH(configuration.getScm())) {
             info("Using SSH to delete remote tag: " + tagName);
             return deleteRemoteTag(tagName,transport -> {
@@ -1596,6 +1591,19 @@ public class GitCommand {
      */
     public GitCommand runPomCommands(@NotNull Consumer<PomCommand> pomCommandConsumer, PomCommand command) {
         pomCommandConsumer.accept(command);
+        return this;
+    }
+
+    /**
+     * Executes the provided {@link ShellCommand} using the specified {@link Consumer}.
+     * Run a shell command.
+     *
+     * @param shellComandConsumer the consumer that defines how the command should be executed
+     * @param command the ShellCommand instance to execute
+     * @return this GitCommand instance
+     */
+    public GitCommand runShellCommands(@NotNull Consumer<ShellCommand> shellComandConsumer, ShellCommand command) {
+        shellComandConsumer.accept(command);
         return this;
     }
 
