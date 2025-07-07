@@ -2,8 +2,11 @@ package com.mockholm.commands;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
+import java.util.List;
 
 import org.apache.maven.plugin.logging.Log;
+
+import com.mockholm.config.BuildSystem;
 
 public class ShellCommand {
     private final Log log;
@@ -86,21 +89,63 @@ public class ShellCommand {
         return this;
     }
 
-    public ShellCommand setDotEnv(String name,String value) throws Exception {
-        setProperties(name, value,".env");
+    public ShellCommand setDotEnv(String name, String value) throws Exception {
+        setProperties(name, value, ".env");
         return this;
     }
 
-    public ShellCommand setProperties(String name,String value,String propertiesFile) throws Exception {
+    public ShellCommand setProperties(String name, String value, String propertiesFile) throws Exception {
         String template = "echo \"%s=%s\" >> %s";
-        String commandString = String.format(template, name, value,propertiesFile);
+        String commandString = String.format(template, name, value, propertiesFile);
         runCommand(commandString);
         return this;
     }
 
-    public ShellCommand run(String command) throws Exception{
+    public ShellCommand setBuildProperties(List<String[]> properties) {
+        properties.forEach(pair -> {
+            try {
+                setBuildProperty(pair[0], pair[1], ShellCommand.getCICDPlatform());
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        });
+        return this;
+    }
+
+    public ShellCommand setBuildProperty(String name, String value, BuildSystem bs) throws Exception {
+        switch(bs){
+            case AZURE_DEVOPS:
+                return setAzureVariable(name, value);
+            case GITHUB_ACTIONS:
+                return setGitHubActionsVariable(name, value);
+            case JENKINS:
+                return setJenkinsVariable(name,value);
+            case TEAM_CITY:
+                return setTeamCityParameter(name, value);
+            case UNKNOWN:
+                return setDotEnv(name, value);
+            default:
+                return setDotEnv(name, value);
+        }
+    }
+
+    public ShellCommand run(String command) throws Exception {
         runCommand(command);
         return this;
+    }
+
+    public static BuildSystem getCICDPlatform() {
+        if (System.getenv("TF_BUILD") != null) {
+            return BuildSystem.AZURE_DEVOPS;
+        } else if (System.getenv("TEAMCITY_VERSION") != null) {
+            return BuildSystem.TEAM_CITY;
+        } else if (System.getenv("JENKINS_URL") != null) {
+            return BuildSystem.JENKINS;
+        } else if ("true".equals(System.getenv("GITHUB_ACTIONS"))) {
+            return BuildSystem.GITHUB_ACTIONS;
+        } else {
+            return BuildSystem.UNKNOWN;
+        }
     }
 
     private void runShellCommand(String command) throws Exception {

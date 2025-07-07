@@ -2,6 +2,7 @@ package com.mockholm.mojos.commons;
 
 import com.mockholm.commands.GitCommand;
 import com.mockholm.commands.PomCommand;
+import com.mockholm.commands.ShellCommand;
 import com.mockholm.config.*;
 import com.mockholm.models.CommitDescription;
 import com.mockholm.models.MojoCommons;
@@ -13,6 +14,8 @@ import org.apache.maven.plugin.MojoExecutionException;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
+import java.util.Arrays;
+import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 
 public class ReleaseMojo {
@@ -114,6 +117,15 @@ public class ReleaseMojo {
                     .commit(commitMessage.get())
                     .gitInfo()
                     .push(gitConfiguration)
+                    .runShellCommands(cmd -> {
+                        List<String[]> properties = Arrays.asList(
+                        new String[]{"NEXT_DEV_VERSION", nextDevelopmentVersion.toString()},
+                        new String[]{"NEXT_RELEASE_VERSION", nextVersion.toString()}
+                        );
+                        
+                        cmd.setBuildProperties(properties);
+
+                    },new ShellCommand(commons.getLog()))
                     .close();
 
         } catch (IOException e) {
