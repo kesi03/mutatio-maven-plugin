@@ -21,39 +21,40 @@ import java.util.concurrent.atomic.AtomicReference;
 public class ReleaseMojo {
     private final MojoCommons commons;
 
-    public ReleaseMojo(MojoCommons commons){
-        this.commons=commons;
+    public ReleaseMojo(MojoCommons commons) {
+        this.commons = commons;
     }
 
-    public void executeStart(@NotNull ReleaseType releaseType, VersionIdentifier versionIdentifier){
+    public void executeStart(@NotNull ReleaseType releaseType, VersionIdentifier versionIdentifier) {
         commons.getLog().info("Current Branch Name: " + GitUtils.getCurrentBranch());
         commons.getLog().info("Current version: " + commons.getProject().getVersion());
 
         SemanticVersion currentVersion = SemanticVersion.parse(commons.getProject().getVersion());
 
-        commons.getLog().info("Current Branch Version: "+currentVersion.toString());
+        commons.getLog().info("Current Branch Version: " + currentVersion.toString());
 
-        SemanticVersion nextVersion = getNextVersion(currentVersion,releaseType);
+        SemanticVersion nextVersion = getNextVersion(currentVersion, releaseType);
 
-        commons.getLog().info("Release Branch: "+nextVersion.toString());
+        commons.getLog().info("Release Branch: " + nextVersion.toString());
 
-        SemanticVersion nextDevelopmentVersion = getNextVersion(currentVersion,releaseType,VersionIdentifier.SNAPSHOT.getValue(), "");
+        SemanticVersion nextDevelopmentVersion = getNextVersion(currentVersion, releaseType,
+                VersionIdentifier.SNAPSHOT.getValue(), "");
 
-        commons.getLog().info("Dev Branch: "+nextDevelopmentVersion.toString());
+        commons.getLog().info("Dev Branch: " + nextDevelopmentVersion.toString());
 
         AtomicReference<String> commitMessage = new AtomicReference<>("");
 
         try {
-            GitConfiguration gitConfiguration=new GitConfiguration()
+            GitConfiguration gitConfiguration = new GitConfiguration()
                     .withServerKey(commons.getProject().getProperties().getProperty("gitProvider"))
                     .withScm(commons.getProject().getScm())
                     .withSettings(commons.getSettings());
             String baseDir = commons.getProject().getBasedir().getAbsolutePath();
-            
+
             PomCommand pomCommand = new PomCommand(baseDir, commons.getLog());
             new GitCommand(commons.getLog())
-                    .changeBranch(BranchType.DEVELOPMENT.getValue(),gitConfiguration)
-                    .changeBranch(BranchType.RELEASE.getValue()+"/"+nextVersion.toString(),gitConfiguration)
+                    .changeBranch(BranchType.DEVELOPMENT.getValue(), gitConfiguration)
+                    .changeBranch(BranchType.RELEASE.getValue() + "/" + nextVersion.toString(), gitConfiguration)
                     .gitInfo()
                     .runPomCommands(cmd -> {
                         try {
@@ -85,7 +86,7 @@ public class ReleaseMojo {
                     .addAllChanges()
                     .commit(commitMessage.get())
                     .push(gitConfiguration)
-                    .changeBranch(BranchType.DEVELOPMENT.getValue(),gitConfiguration)
+                    .changeBranch(BranchType.DEVELOPMENT.getValue(), gitConfiguration)
                     .runPomCommands(cmd -> {
                         try {
                             pomCommand
@@ -119,13 +120,12 @@ public class ReleaseMojo {
                     .push(gitConfiguration)
                     .runShellCommands(cmd -> {
                         List<String[]> properties = Arrays.asList(
-                        new String[]{"NEXT_DEV_VERSION", nextDevelopmentVersion.toString()},
-                        new String[]{"NEXT_RELEASE_VERSION", nextVersion.toString()}
-                        );
-                        
+                                new String[] { "NEXT_DEV_VERSION", nextDevelopmentVersion.toString() },
+                                new String[] { "NEXT_RELEASE_VERSION", nextVersion.toString() });
+
                         cmd.setBuildProperties(properties);
 
-                    },new ShellCommand(commons.getLog()))
+                    }, new ShellCommand(commons.getLog()))
                     .close();
 
         } catch (IOException e) {
@@ -138,7 +138,8 @@ public class ReleaseMojo {
         return getNextVersion(currentVersion, releaseType, null, null);
     }
 
-    public SemanticVersion getNextVersion(SemanticVersion currentVersion, ReleaseType releaseType, String preRelease, String build) {
+    public SemanticVersion getNextVersion(SemanticVersion currentVersion, ReleaseType releaseType, String preRelease,
+            String build) {
         int major = currentVersion.getMajor();
         int minor = currentVersion.getMinor();
         int patch = currentVersion.getPatch();
@@ -162,11 +163,10 @@ public class ReleaseMojo {
                 minor,
                 patch,
                 preRelease != null ? preRelease : "",
-                build != null ? build : ""
-        );
+                build != null ? build : "");
     }
 
-    public void executeEnd(@NotNull String release,BranchType mainOrMaster){
+    public void executeEnd(@NotNull String release, BranchType mainOrMaster) {
         commons.getLog().info("currentBranch: " + GitUtils.getCurrentBranch());
         commons.getLog().info("Current version: " + commons.getProject().getVersion());
 
@@ -178,24 +178,24 @@ public class ReleaseMojo {
 
         commons.getLog().info("Release version: " + releaseVersion.toString());
 
-        String releaseBranch = "release/"+releaseVersion.toString();
+        String releaseBranch = "release/" + releaseVersion.toString();
 
         String baseDir = commons.getProject().getBasedir().getAbsolutePath();
 
         PomCommand pomCommand = new PomCommand(baseDir, commons.getLog());
 
-        commons.getLog().info("mainOrMaster: "+mainOrMaster.getValue());
+        commons.getLog().info("mainOrMaster: " + mainOrMaster.getValue());
 
         AtomicReference<String> commitMessage = new AtomicReference<>("");
 
         try {
-            GitConfiguration gitConfiguration=new GitConfiguration()
+            GitConfiguration gitConfiguration = new GitConfiguration()
                     .withServerKey(commons.getProject().getProperties().getProperty("gitProvider"))
                     .withScm(commons.getProject().getScm())
                     .withSettings(commons.getSettings());
 
             new GitCommand(commons.getLog())
-                    .changeBranch(releaseBranch,gitConfiguration)
+                    .changeBranch(releaseBranch, gitConfiguration)
                     .gitInfo()
                     .runPomCommands(cmd -> {
                         CommitDescription description = new CommitDescription.Builder()
@@ -214,14 +214,22 @@ public class ReleaseMojo {
                                 .build();
                         commitMessage.set(CommitUtils.format(commit));
                         commons.getLog().info("Commit: " + commitMessage);
-                    },pomCommand)
+                    }, pomCommand)
                     .addAllChanges()
                     .commit(commitMessage.get())
                     .mergeBranches(releaseBranch, mainOrMaster.getValue())
-                    .changeBranch(mainOrMaster.getValue(),gitConfiguration)
-                    .createTag("release-"+releaseVersion.toString())
+                    .changeBranch(mainOrMaster.getValue(), gitConfiguration)
+                    .createTag("release-" + releaseVersion.toString())
                     .gitInfo()
                     .push(gitConfiguration)
+                    .runShellCommands(cmd -> {
+                        List<String[]> properties = Arrays.asList(
+                                new String[] { "RELEASE_BRANCH", releaseBranch },
+                                new String[] { "RELEASE_VERSION", releaseVersion.toString() });
+
+                        cmd.setBuildProperties(properties);
+
+                    }, new ShellCommand(commons.getLog()))
                     .close();
         } catch (IOException e) {
             throw new RuntimeException(e);
