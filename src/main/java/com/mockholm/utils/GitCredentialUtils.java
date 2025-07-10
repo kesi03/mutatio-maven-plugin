@@ -325,6 +325,7 @@ public class GitCredentialUtils {
 
         if (settings == null || serverKey == null || settings.getServer(serverKey) == null) {
             // TeamCity scenario or missing Maven settings
+            System.out.println("Settings and ServerKey null");
             return getDefaultSshdSessionFactory();
         }
         return getSshdSessionFactory(getServer(configuration));
