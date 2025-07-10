@@ -16,7 +16,16 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 
+/**
+ * Utility class for performing common Git operations using JGit.
+ */
 public class GitUtils {
+    /**
+     * Retrieves the name of the current Git branch from the repository located in the current directory.
+     *
+     * @return the name of the active branch
+     * @throws RuntimeException if the repository cannot be opened or accessed
+     */
     public static String getCurrentBranch(){
         String branch="";
         Git git = null;

@@ -1225,6 +1225,9 @@ public class GitCommand {
         if(!configuration.isPushChanges()){
             return this;
         }
+
+
+
         if (GitCredentialUtils.isSSH(configuration.getScm())) {
             return push(transport -> {
                 if (transport instanceof SshTransport) {
@@ -1242,6 +1245,7 @@ public class GitCommand {
             return push(credentialsProvider);
         }
     }
+
     /**
      * Pushes all changes from the current repository to the origin remote using HTTPS authentication.
      *
