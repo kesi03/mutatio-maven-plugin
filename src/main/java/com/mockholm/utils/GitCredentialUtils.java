@@ -320,6 +320,13 @@ public class GitCredentialUtils {
      * @return a configured SshdSessionFactory instance
      */
     public static SshdSessionFactory getSshdSessionFactory(GitConfiguration configuration) {
+        Settings settings = configuration.getSettings();
+        String serverKey = configuration.getServerKey();
+
+        if (settings == null || serverKey == null || settings.getServer(serverKey) == null) {
+            // TeamCity scenario or missing Maven settings
+            return getDefaultSshdSessionFactory();
+        }
         return getSshdSessionFactory(getServer(configuration));
     }
 
@@ -332,7 +339,23 @@ public class GitCredentialUtils {
      * @return a configured SshdSessionFactory instance
      */
     public static SshdSessionFactory getSshdSessionFactory(String serverKey, Settings settings) {
+        if (settings == null || serverKey == null || settings.getServer(serverKey) == null) {
+            // TeamCity scenario or missing Maven settings
+            return getDefaultSshdSessionFactory();
+        }
         return getSshdSessionFactory(getServer(serverKey, settings));
+    }
+
+    /**
+     * Gets a default  SshdSessionFactory
+     *
+     * @return a configured SshdSessionFactory instance
+     */
+    public static SshdSessionFactory getDefaultSshdSessionFactory() {
+        return new SshdSessionFactoryBuilder()
+                .setHomeDirectory(new File(System.getProperty("user.home")))
+                .setSshDirectory(new File(System.getProperty("user.home"), ".ssh"))
+                .build(null);
     }
 
     /**
