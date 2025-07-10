@@ -95,7 +95,7 @@ public class UpdateSettingsMojo extends AbstractMojo {
             }
             try {
                 Settings settings = new DefaultSettingsReader().read(new File(mavenSettings), null);
-                getLog().info("Actio: " + action);
+                getLog().info("Action: " + action);
                 Optional<String> idValue = Optional.ofNullable(id)
                         .filter(s -> !s.isEmpty());
                 if (idValue.isPresent()) {
