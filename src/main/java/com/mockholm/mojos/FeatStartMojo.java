@@ -62,6 +62,7 @@ public class FeatStartMojo extends AbstractMojo {
         String version = pluginDescriptor.getVersion();
         getLog().info("Running plugin version: " + version);
         getLog().info("Active profiles: " + session.getRequest().getActiveProfiles());
+        getLog().info("repoIndentity:"+repoIdentity);
         new BranchMojo(new MojoCommons().
                 withLog(getLog()).
                 withPushChanges(pushChanges).
