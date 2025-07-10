@@ -37,7 +37,7 @@ public class FeatStartMojo extends AbstractMojo {
      * The identity of the repository used to determine the branch to start.
      * This is typically the name of the repository or a unique identifier.
      */
-    @Parameter(property = "repoIdentity", name = "repoIdentity")
+    @Parameter(property = "repoIdentity", name = "repoIdentity", defaultValue = "defaultValue")
     private String repoIdentity;
 
     /**
@@ -62,7 +62,7 @@ public class FeatStartMojo extends AbstractMojo {
         String version = pluginDescriptor.getVersion();
         getLog().info("Running plugin version: " + version);
         getLog().info("Active profiles: " + session.getRequest().getActiveProfiles());
-        getLog().info("repoIndentity:"+repoIdentity);
+        getLog().info("repoIndentity: "+repoIdentity);
         new BranchMojo(new MojoCommons().
                 withLog(getLog()).
                 withPushChanges(pushChanges).
