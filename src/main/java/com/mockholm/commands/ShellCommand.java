@@ -8,6 +8,11 @@ import org.apache.maven.plugin.logging.Log;
 
 import com.mockholm.config.BuildSystem;
 
+/**
+ * Utility class for executing shell commands and setting environment variables
+ * across different CI/CD platforms including Azure DevOps, GitHub Actions,
+ * Jenkins, TeamCity, and fallback support for .env files.
+ */
 public class ShellCommand {
     private final Log log;
     public static String BASH = "/bin/bash";
@@ -61,6 +66,14 @@ public class ShellCommand {
         }
     }
 
+    /**
+     * Sets a variable in Azure DevOps using the task.setvariable command.
+     *
+     * @param name  the name of the variable
+     * @param value the value to assign
+     * @return      the current ShellCommand instance for chaining
+     * @throws Exception if command execution fails
+     */
     public ShellCommand setAzureVariable(String name, String value) throws Exception {
         String template = "echo \"##vso[task.setvariable variable=%s;]%s\"";
         String commandString = String.format(template, name, value);
@@ -68,6 +81,14 @@ public class ShellCommand {
         return this;
     }
 
+    /**
+     * Sets a parameter in TeamCity using the service message syntax.
+     *
+     * @param name  the parameter name
+     * @param value the value to assign
+     * @return      the current ShellCommand instance for chaining
+     * @throws Exception if command execution fails
+     */
     public ShellCommand setTeamCityParameter(String name, String value) throws Exception {
         String template = "echo \"##teamcity[setParameter name='%s' value='%s']\"";
         String commandString = String.format(template, name, value);
@@ -75,6 +96,14 @@ public class ShellCommand {
         return this;
     }
 
+    /**
+     * Appends an environment variable to Jenkins' env-vars.properties file.
+     *
+     * @param name  the variable name
+     * @param value the value to assign
+     * @return      the current ShellCommand instance for chaining
+     * @throws Exception if command execution fails
+     */
     public ShellCommand setJenkinsVariable(String name, String value) throws Exception {
         String template = "echo \"export %s=%s\" >> $JENKINS_HOME/env-vars.properties";
         String commandString = String.format(template, name, value);
@@ -82,6 +111,14 @@ public class ShellCommand {
         return this;
     }
 
+    /**
+     * Appends an environment variable to the GitHub Actions environment file.
+     *
+     * @param name  the variable name
+     * @param value the value to assign
+     * @return      the current ShellCommand instance for chaining
+     * @throws Exception if command execution fails
+     */
     public ShellCommand setGitHubActionsVariable(String name, String value) throws Exception {
         String template = "echo \"%s=%s\" >> $GITHUB_ENV";
         String commandString = String.format(template, name, value);
@@ -89,11 +126,27 @@ public class ShellCommand {
         return this;
     }
 
+    /**
+     * Writes a variable into the default .env file.
+     *
+     * @param name  the variable name
+     * @param value the value to assign
+     * @return      the current ShellCommand instance for chaining
+     * @throws Exception if command execution fails
+     */
     public ShellCommand setDotEnv(String name, String value) throws Exception {
-        setProperties(name, value, ".env");
-        return this;
+        return setProperties(name, value, ".env");
     }
 
+    /**
+     * Writes a variable into a specified properties file.
+     *
+     * @param name           the variable name
+     * @param value          the value to assign
+     * @param propertiesFile the file to append to
+     * @return               the current ShellCommand instance for chaining
+     * @throws Exception if command execution fails
+     */
     public ShellCommand setProperties(String name, String value, String propertiesFile) throws Exception {
         String template = "echo \"%s=%s\" >> %s";
         String commandString = String.format(template, name, value, propertiesFile);
@@ -101,17 +154,32 @@ public class ShellCommand {
         return this;
     }
 
+    /**
+     * Sets multiple build properties based on the detected CI/CD platform.
+     *
+     * @param properties a list of name-value pairs
+     * @return           the current ShellCommand instance for chaining
+     */
     public ShellCommand setBuildProperties(List<String[]> properties) {
         properties.forEach(pair -> {
             try {
                 setBuildProperty(pair[0], pair[1], ShellCommand.getCICDPlatform());
             } catch (Exception e) {
-                e.printStackTrace();
+                error("setBuildProperties: error",e);
             }
         });
         return this;
     }
 
+    /**
+     * Sets a single build property for the specified build system.
+     *
+     * @param name  the property name
+     * @param value the value to assign
+     * @param bs    the target BuildSystem
+     * @return      the current ShellCommand instance for chaining
+     * @throws Exception if command execution fails
+     */
     public ShellCommand setBuildProperty(String name, String value, BuildSystem bs) throws Exception {
         switch(bs){
             case AZURE_DEVOPS:
@@ -129,11 +197,23 @@ public class ShellCommand {
         }
     }
 
+    /**
+     * Executes a shell command using the appropriate interpreter for the OS.
+     *
+     * @param command the shell command to execute
+     * @return        the current ShellCommand instance for chaining
+     * @throws Exception if execution fails or OS is unsupported
+     */
     public ShellCommand run(String command) throws Exception {
         runCommand(command);
         return this;
     }
 
+    /**
+     * Detects the current CI/CD platform based on environment variables.
+     *
+     * @return the detected BuildSystem enum value
+     */
     public static BuildSystem getCICDPlatform() {
         if (System.getenv("TF_BUILD") != null) {
             return BuildSystem.AZURE_DEVOPS;
@@ -148,7 +228,14 @@ public class ShellCommand {
         }
     }
 
-    private void runShellCommand(String command) throws Exception {
+    /**
+     * Executes a shell command using the system's default shell (`/bin/sh`)
+     * and logs each line of standard output.
+     *
+     * @param command the command to execute
+     * @throws Exception if an I/O error occurs or the process is interrupted
+     */
+    public void runShellCommand(String command) throws Exception {
         Process process = Runtime.getRuntime().exec(new String[] { ShellCommand.SHELL, "-c", command });
         BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
         String line;
@@ -158,7 +245,14 @@ public class ShellCommand {
         process.waitFor();
     }
 
-    private void runBashCommand(String command) throws Exception {
+    /**
+     * Executes a shell command using the Bash shell (`/bin/bash`)
+     * and logs each line of standard output.
+     *
+     * @param command the command to execute
+     * @throws Exception if an I/O error occurs or the process is interrupted
+     */
+    public void runBashCommand(String command) throws Exception {
         Process process = Runtime.getRuntime().exec(new String[] { ShellCommand.BASH, "-c", command });
         BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
         String line;
@@ -168,7 +262,14 @@ public class ShellCommand {
         process.waitFor();
     }
 
-    private void runPowerShellCommand(String command) throws Exception {
+    /**
+     * Executes a command using PowerShell (`powershell.exe`) on Windows systems
+     * and logs each line of standard output.
+     *
+     * @param command the command to execute
+     * @throws Exception if an I/O error occurs or the process is interrupted
+     */
+    public void runPowerShellCommand(String command) throws Exception {
         Process process = Runtime.getRuntime().exec(new String[] { ShellCommand.POWERSHELL, "-Command", command });
         BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
         String line;
@@ -178,7 +279,14 @@ public class ShellCommand {
         process.waitFor();
     }
 
-    private void runCommand(String command) throws Exception {
+    /**
+     * Determines the current operating system and executes the command using
+     * the appropriate shell interpreter (PowerShell for Windows, Bash or default shell for Unix-based systems).
+     *
+     * @param command the command to execute
+     * @throws Exception if the OS is unsupported or command execution fails
+     */
+    public void runCommand(String command) throws Exception {
         String os = System.getProperty("os.name").toLowerCase();
         if (os.contains("win")) {
             runPowerShellCommand(command);
@@ -195,7 +303,12 @@ public class ShellCommand {
         }
     }
 
-    private boolean isBashAvailable() {
+    /**
+     * Checks if Bash is available on the system by running `bash --version`.
+     *
+     * @return true if Bash is available, false otherwise
+     */
+    public boolean isBashAvailable() {
         try {
             Process process = Runtime.getRuntime().exec(new String[] { "bash", "--version" });
             process.waitFor();
