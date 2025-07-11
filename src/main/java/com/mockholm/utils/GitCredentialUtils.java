@@ -12,16 +12,20 @@ import org.eclipse.jgit.transport.*;
 import org.eclipse.jgit.transport.ssh.jsch.JschConfigSessionFactory;
 import org.eclipse.jgit.transport.ssh.jsch.OpenSshConfig;
 import org.eclipse.jgit.transport.sshd.KeyPasswordProvider;
+import org.eclipse.jgit.transport.sshd.ServerKeyDatabase;
 import org.eclipse.jgit.transport.sshd.SshdSessionFactory;
 import org.eclipse.jgit.transport.sshd.SshdSessionFactoryBuilder;
 import org.eclipse.jgit.util.FS;
 import com.jcraft.jsch.*;
 
 import java.io.File;
+import java.net.InetSocketAddress;
 import java.net.URISyntaxException;
+import java.nio.file.FileSystem;
 import java.nio.file.Path;
+import java.security.PublicKey;
 import java.util.List;
-import java.util.function.Function;
+import java.util.function.BiFunction;
 
 /**
  * Utility class for handling Git authentication and repository connection details.
@@ -352,6 +356,8 @@ public class GitCredentialUtils {
 
     /**
      * Gets a default SshdSessionFactory
+     /**
+     * Gets a default SshdSessionFactory with relaxed host key checking
      *
      * @return a configured SshdSessionFactory instance
      */
@@ -359,17 +365,32 @@ public class GitCredentialUtils {
         System.out.println("user.home = " + System.getProperty("user.home"));
         File sshDir = new File(System.getProperty("user.home"), ".ssh");
         System.out.println("SSH Directory: " + sshDir.getAbsolutePath());
-        File knownHosts = new File(System.getProperty("user.home"), ".ssh/known_hosts");
-        System.out.println("Known Hosts File: " +knownHosts);
+        File knownHosts = new File(sshDir, "known_hosts");
+        System.out.println("Known Hosts File: " + knownHosts);
+        ServerKeyDatabase permissiveHostKeyDatabase = new ServerKeyDatabase() {
+            @Override
+            public List<PublicKey> lookup(String s, InetSocketAddress inetSocketAddress, Configuration configuration) {
+                return List.of();
+            }
+
+            @Override
+            public boolean accept(String s, InetSocketAddress inetSocketAddress, PublicKey publicKey, Configuration configuration, CredentialsProvider credentialsProvider) {
+                return true;
+            }
+
+
+        };
+
 
         return new SshdSessionFactoryBuilder()
                 .setHomeDirectory(new File(System.getProperty("user.home")))
                 .setSshDirectory(sshDir)
                 .setDefaultKnownHostsFiles(homeDir -> {
-                    System.out.println("homeDir: " +homeDir);
+                    System.out.println("homeDir: " + homeDir);
                     Path knownHostsPath = new File(homeDir, "known_hosts").toPath();
                     return List.of(knownHostsPath);
                 })
+                .setServerKeyDatabase((homeDir, sshDirFile) -> permissiveHostKeyDatabase)
                 .build(null);
     }
 
