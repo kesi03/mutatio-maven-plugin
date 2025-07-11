@@ -8,6 +8,7 @@ import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.RemoteAddCommand;
 import org.eclipse.jgit.api.TransportConfigCallback;
 import org.eclipse.jgit.api.errors.GitAPIException;
+import org.eclipse.jgit.internal.transport.sshd.agent.connector.Factory;
 import org.eclipse.jgit.transport.*;
 import org.eclipse.jgit.transport.ssh.jsch.JschConfigSessionFactory;
 import org.eclipse.jgit.transport.ssh.jsch.OpenSshConfig;
@@ -15,10 +16,12 @@ import org.eclipse.jgit.transport.sshd.KeyPasswordProvider;
 import org.eclipse.jgit.transport.sshd.ServerKeyDatabase;
 import org.eclipse.jgit.transport.sshd.SshdSessionFactory;
 import org.eclipse.jgit.transport.sshd.SshdSessionFactoryBuilder;
+import org.eclipse.jgit.transport.sshd.agent.ConnectorFactory;
 import org.eclipse.jgit.util.FS;
 import com.jcraft.jsch.*;
 
 import java.io.File;
+import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.URISyntaxException;
 import java.nio.file.FileSystem;
@@ -381,8 +384,8 @@ public class GitCredentialUtils {
 
         };
 
-
         return new SshdSessionFactoryBuilder()
+                .setPreferredAuthentications("publickey")
                 .setHomeDirectory(new File(System.getProperty("user.home")))
                 .setSshDirectory(sshDir)
                 .setDefaultKnownHostsFiles(homeDir -> {
@@ -391,6 +394,7 @@ public class GitCredentialUtils {
                     return List.of(knownHostsPath);
                 })
                 .setServerKeyDatabase((homeDir, sshDirFile) -> permissiveHostKeyDatabase)
+                .setConnectorFactory(new Factory())
                 .build(null);
     }
 
