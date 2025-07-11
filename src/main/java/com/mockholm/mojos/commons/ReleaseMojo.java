@@ -89,7 +89,6 @@ public class ReleaseMojo {
                     }, pomCommand)
                     .addAllChanges()
                     .commit(commitMessage.get())
-                    .pushTag(releaseTag,gitConfiguration)
                     .push(gitConfiguration)
                     .changeBranch(BranchType.DEVELOPMENT.getValue(), gitConfiguration)
                     .runPomCommands(cmd -> {
@@ -170,6 +169,7 @@ public class ReleaseMojo {
     }
 
     public void executeEnd(@NotNull String release, BranchType mainOrMaster) {
+        commons.getLog().info("executeEnd");
         commons.getLog().info("currentBranch: " + GitUtils.getCurrentBranch());
         commons.getLog().info("Current version: " + commons.getProject().getVersion());
 
@@ -222,7 +222,7 @@ public class ReleaseMojo {
                     .commit(commitMessage.get())
                     .mergeBranches(releaseBranch, mainOrMaster.getValue())
                     .changeBranch(mainOrMaster.getValue(), gitConfiguration)
-                    .createTag("release-" + releaseVersion.toString())
+//                    .createTag("release-" + releaseVersion.toString())
                     .gitInfo()
                     .push(gitConfiguration)
                     .runShellCommands(cmd -> {
