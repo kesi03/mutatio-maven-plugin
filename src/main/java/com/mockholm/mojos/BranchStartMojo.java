@@ -42,7 +42,7 @@ public class BranchStartMojo extends AbstractMojo {
     /**
      * The Branch type {@link BranchType}
      */
-    @Parameter(property = "branchType", name = "branchType", defaultValue = "FEAT")
+    @Parameter(property = "branchType", name = "branchType", defaultValue = "FEATURE")
     private String branchType;
 
 
