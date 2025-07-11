@@ -52,9 +52,13 @@ public class ReleaseMojo {
             String baseDir = commons.getProject().getBasedir().getAbsolutePath();
 
             PomCommand pomCommand = new PomCommand(baseDir, commons.getLog());
+
+            String releaseBranch = BranchType.RELEASE.getValue() + "/" + nextVersion.toString();
+            String releaseTag = BranchType.RELEASE.getValue() + "-" + nextVersion.toString();
+
             new GitCommand(commons.getLog())
                     .changeBranch(BranchType.DEVELOPMENT.getValue(), gitConfiguration)
-                    .changeBranch(BranchType.RELEASE.getValue() + "/" + nextVersion.toString(), gitConfiguration)
+                    .changeBranch(releaseBranch, gitConfiguration)
                     .gitInfo()
                     .runPomCommands(cmd -> {
                         try {
@@ -85,6 +89,7 @@ public class ReleaseMojo {
                     }, pomCommand)
                     .addAllChanges()
                     .commit(commitMessage.get())
+                    .pushTag(releaseTag,gitConfiguration)
                     .push(gitConfiguration)
                     .changeBranch(BranchType.DEVELOPMENT.getValue(), gitConfiguration)
                     .runPomCommands(cmd -> {
@@ -122,9 +127,7 @@ public class ReleaseMojo {
                         List<String[]> properties = Arrays.asList(
                                 new String[] { "MUTATIO_NEXT_DEV_VERSION", nextDevelopmentVersion.toString() },
                                 new String[] { "MUTATIO_NEXT_RELEASE_VERSION", nextVersion.toString() });
-
                         cmd.setBuildProperties(properties);
-
                     }, new ShellCommand(commons.getLog()))
                     .close();
 
