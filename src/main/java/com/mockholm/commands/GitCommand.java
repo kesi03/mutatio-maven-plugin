@@ -1635,7 +1635,7 @@ public class GitCommand {
             }
 
             // Checkout target branch
-            git.checkout().setName(to).call();
+            git.checkout().setName(to).setStartPoint("origin/" + to).call();
             info("Checked out target branch: " + to);
 
             // Merge source branch into target
@@ -1677,7 +1677,7 @@ public class GitCommand {
         try {
 
             // Checkout target branch (to)
-            git.checkout().setName(to).call();
+            git.checkout().setName(to).setStartPoint("origin/" + to).call();
             info("Checked out target branch: " + to);
 
             // Merge source branch (from) into target
