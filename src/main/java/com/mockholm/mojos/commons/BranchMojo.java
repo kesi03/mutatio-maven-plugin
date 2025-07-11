@@ -2,6 +2,7 @@ package com.mockholm.mojos.commons;
 
 import com.mockholm.commands.GitCommand;
 import com.mockholm.commands.PomCommand;
+import com.mockholm.commands.ShellCommand;
 import com.mockholm.config.BranchAction;
 import com.mockholm.config.BranchType;
 import com.mockholm.config.GitConfiguration;
@@ -16,6 +17,8 @@ import org.apache.maven.plugin.MojoExecutionException;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -116,7 +119,14 @@ public class BranchMojo {
                         }
                     })
                     .push(gitConfiguration)
-                    .push(gitConfiguration)
+                    .runShellCommands(cmd -> {
+                        List<String[]> properties = Arrays.asList(
+                                new String[] { "FEAT_VERSION", featVersion.toString() },
+                                new String[] { "CREATED_BRANCH", branchType.getValue()+"/"+branchName });
+
+                        cmd.setBuildProperties(properties);
+
+                    }, new ShellCommand(commons.getLog()))
                     .close();
 
         } catch (IOException e) {
