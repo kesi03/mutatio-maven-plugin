@@ -1308,7 +1308,9 @@ public class GitCommand {
             throw new RuntimeException("Failed to push changes", e);
         }
         return this;
-    }    /**
+    }
+
+    /**
      * Fetches changes from the origin remote using the appropriate authentication strategy.
      *
      * @param configuration the Git configuration containing authentication and server details
@@ -1612,6 +1614,54 @@ public class GitCommand {
         return this;
     }
 
+    public GitCommand mergeBranches(@NotNull String from, @NotNull String to, GitConfiguration configuration) {
+        try {
+            // Determine fetch strategy
+            if (GitCredentialUtils.isSSH(configuration.getScm())) {
+                info("Using SSH for branch fetch before merge");
+                fetch(transport -> {
+                    if (transport instanceof SshTransport) {
+                        SshTransport sshTransport = (SshTransport) transport;
+                        sshTransport.setSshSessionFactory(GitCredentialUtils.getSshdSessionFactory(configuration));
+                    }
+                });
+            } else {
+                info("Using HTTPS credentials for branch fetch before merge");
+                String password = configuration.getSettings()
+                        .getServer(configuration.getServerKey())
+                        .getPassword();
+                CredentialsProvider credentialsProvider = GitCredentialUtils.getUserProvider(password);
+                fetch(credentialsProvider);
+            }
+
+            // Checkout target branch
+            git.checkout().setName(to).call();
+            info("Checked out target branch: " + to);
+
+            // Merge source branch into target
+            MergeResult result = git.merge()
+                    .include(git.getRepository().findRef(from))
+                    .call();
+
+            switch (result.getMergeStatus()) {
+                case FAST_FORWARD:
+                case MERGED:
+                case MERGED_SQUASHED:
+                    info("Merge successful: " + from + " → " + to);
+                    break;
+                default:
+                    error("Merge failed with status: " + result.getMergeStatus(), null);
+                    throw new RuntimeException("Merge failed: " + result.getMergeStatus());
+            }
+
+        } catch (GitAPIException | IOException e) {
+            error("Error merging " + from + " into " + to, e);
+            throw new RuntimeException("Failed to merge branches", e);
+        }
+
+        return this;
+    }
+
     /**
      * Merges the specified source branch into the target branch.
      * Automatically checks out the target branch before attempting the merge.
@@ -1625,6 +1675,7 @@ public class GitCommand {
      */
     public GitCommand mergeBranches(@NotNull String from, @NotNull String to) {
         try {
+
             // Checkout target branch (to)
             git.checkout().setName(to).call();
             info("Checked out target branch: " + to);
