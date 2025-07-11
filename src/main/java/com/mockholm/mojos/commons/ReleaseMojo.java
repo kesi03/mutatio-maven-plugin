@@ -220,9 +220,9 @@ public class ReleaseMojo {
                     }, pomCommand)
                     .addAllChanges()
                     .commit(commitMessage.get())
-                    .mergeBranches(releaseBranch, mainOrMaster.getValue())
+                    .mergeBranches(releaseBranch, mainOrMaster.getValue(),gitConfiguration)
                     .changeBranch(mainOrMaster.getValue(), gitConfiguration)
-//                    .createTag("release-" + releaseVersion.toString())
+                    .createTag("release-" + releaseVersion.toString())
                     .gitInfo()
                     .push(gitConfiguration)
                     .runShellCommands(cmd -> {
