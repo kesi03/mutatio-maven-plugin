@@ -120,8 +120,8 @@ public class ReleaseMojo {
                     .push(gitConfiguration)
                     .runShellCommands(cmd -> {
                         List<String[]> properties = Arrays.asList(
-                                new String[] { "NEXT_DEV_VERSION", nextDevelopmentVersion.toString() },
-                                new String[] { "NEXT_RELEASE_VERSION", nextVersion.toString() });
+                                new String[] { "MUTATIO_NEXT_DEV_VERSION", nextDevelopmentVersion.toString() },
+                                new String[] { "MUTATIO_NEXT_RELEASE_VERSION", nextVersion.toString() });
 
                         cmd.setBuildProperties(properties);
 
@@ -224,11 +224,9 @@ public class ReleaseMojo {
                     .push(gitConfiguration)
                     .runShellCommands(cmd -> {
                         List<String[]> properties = Arrays.asList(
-                                new String[] { "RELEASE_BRANCH", releaseBranch },
-                                new String[] { "RELEASE_VERSION", releaseVersion.toString() });
-
+                                new String[] { "MUTATIO_RELEASE_BRANCH", releaseBranch },
+                                new String[] { "MUTATIO_RELEASE_VERSION", releaseVersion.toString() });
                         cmd.setBuildProperties(properties);
-
                     }, new ShellCommand(commons.getLog()))
                     .close();
         } catch (IOException e) {

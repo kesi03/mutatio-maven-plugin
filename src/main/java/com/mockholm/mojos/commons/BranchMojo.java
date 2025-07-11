@@ -28,15 +28,16 @@ import java.util.concurrent.atomic.AtomicReference;
 public class BranchMojo {
     private final MojoCommons commons;
 
-    public BranchMojo(MojoCommons commons){
-        this.commons=commons;
+    public BranchMojo(MojoCommons commons) {
+        this.commons = commons;
     }
 
     /**
      * Start will create a new branch such as feat/jira-123456
+     *
      * @param branchType
      */
-    public void executeStart(@NotNull BranchType branchType){
+    public void executeStart(@NotNull BranchType branchType) {
         commons.getLog().info("currentBranch: " + GitUtils.getCurrentBranch());
         commons.getLog().info("Current version: " + commons.getProject().getVersion());
 
@@ -47,9 +48,9 @@ public class BranchMojo {
                 .filter(name -> !name.isBlank())
                 .orElse("123456");
 
-        String branchFullname =branchType.getValue()+"-"+branchName;
+        String branchFullname = branchType.getValue() + "-" + branchName;
 
-        commons.getLog().info("Branch: "+branchFullname);
+        commons.getLog().info("Branch: " + branchFullname);
 
         String preRelease = String.format("%s-%s-%s",
                 currentVersion.getPreRelease(),
@@ -64,7 +65,7 @@ public class BranchMojo {
                 currentVersion.getBuild());
 
 
-        commons.getLog().info(branchType+" version: " + featVersion.toString());
+        commons.getLog().info(branchType + " version: " + featVersion.toString());
 
         CommitDescription description = new CommitDescription.Builder()
                 .action(BranchAction.START)
@@ -87,7 +88,7 @@ public class BranchMojo {
 
         try {
 
-            GitConfiguration gitConfiguration=new GitConfiguration()
+            GitConfiguration gitConfiguration = new GitConfiguration()
                     .withServerKey(commons.getProject().getProperties().getProperty("gitProvider"))
                     .withScm(commons.getProject().getScm())
                     .withSettings(commons.getSettings());
@@ -95,8 +96,8 @@ public class BranchMojo {
 
             PomCommand pomCommand = new PomCommand(baseDir, commons.getLog());
             new GitCommand(commons.getLog())
-                    .changeBranch(BranchType.DEVELOPMENT.getValue(),gitConfiguration)
-                    .changeBranch(branchType.getValue()+"/"+branchName,gitConfiguration)
+                    .changeBranch(BranchType.DEVELOPMENT.getValue(), gitConfiguration)
+                    .changeBranch(branchType.getValue() + "/" + branchName, gitConfiguration)
                     .gitInfo()
                     .runPomCommands(cmd -> {
                         try {
@@ -112,7 +113,7 @@ public class BranchMojo {
                     .commit(commitMessage)
                     .gitInfo()
                     .when(command -> {
-                        if(!commons.isPushChanges()){
+                        if (!commons.isPushChanges()) {
                             gitConfiguration.setPushChanges(false);
                             commons.getLog().warn("Skipping push");
                             command.skipNext();
@@ -121,8 +122,8 @@ public class BranchMojo {
                     .push(gitConfiguration)
                     .runShellCommands(cmd -> {
                         List<String[]> properties = Arrays.asList(
-                                new String[] { "FEAT_VERSION", featVersion.toString() },
-                                new String[] { "CREATED_BRANCH", branchType.getValue()+"/"+branchName });
+                                new String[]{"MUTATIO_FEAT_VERSION", featVersion.toString()},
+                                new String[]{"MUTATIO_CREATED_BRANCH", branchType.getValue() + "/" + branchName});
 
                         cmd.setBuildProperties(properties);
 
@@ -137,9 +138,10 @@ public class BranchMojo {
 
     /**
      * End will merge the branch to develop
+     *
      * @param branchType
      */
-    public void executeEnd(@NotNull BranchType branchType){
+    public void executeEnd(@NotNull BranchType branchType) {
         commons.getLog().info("currentBranch: " + GitUtils.getCurrentBranch());
         commons.getLog().info("Current version: " + commons.getProject().getVersion());
 
@@ -150,9 +152,9 @@ public class BranchMojo {
                 .filter(name -> !name.isBlank())
                 .orElse("123456");
 
-        String branchFullName =branchType.getValue()+"-"+branchName;
+        String branchFullName = branchType.getValue() + "-" + branchName;
 
-        commons.getLog().info("Branch: "+branchFullName);
+        commons.getLog().info("Branch: " + branchFullName);
 
         String preRelease = String.format("%s-%s-%s",
                 currentVersion.getPreRelease(),
@@ -167,7 +169,7 @@ public class BranchMojo {
                 currentVersion.getBuild());
 
 
-        commons.getLog().info( branchType.getValue()+" version: " + featVersion.toString());
+        commons.getLog().info(branchType.getValue() + " version: " + featVersion.toString());
 
         CommitDescription description = new CommitDescription.Builder()
                 .action(BranchAction.FINISH)
@@ -189,31 +191,31 @@ public class BranchMojo {
         commons.getLog().info("Commit: " + commitMessage);
 
         try {
-            GitConfiguration gitConfiguration=new GitConfiguration()
+            GitConfiguration gitConfiguration = new GitConfiguration()
                     .withServerKey(commons.getProject().getProperties().getProperty("gitProvider"))
                     .withScm(commons.getProject().getScm())
                     .withSettings(commons.getSettings());
-            
+
             String baseDir = commons.getProject().getBasedir().getAbsolutePath();
 
             PomCommand pomCommand = new PomCommand(baseDir, commons.getLog());
-            AtomicReference<String> developmentVersion= new AtomicReference<>("");
-            GitCommand gitCommand=new GitCommand(commons.getLog());
+            AtomicReference<String> developmentVersion = new AtomicReference<>("");
+            GitCommand gitCommand = new GitCommand(commons.getLog());
 
-                    gitCommand.changeBranch(BranchType.DEVELOPMENT.getValue(),gitConfiguration)
+            gitCommand.changeBranch(BranchType.DEVELOPMENT.getValue(), gitConfiguration)
                     .runPomCommands(cmd -> {
                         developmentVersion.set(PomUtils.getVersion(baseDir));
-                        commons.getLog().info("version: "+developmentVersion);
+                        commons.getLog().info("version: " + developmentVersion);
 
                     }, pomCommand)
-                    .changeBranch(branchType.getValue()+"/"+branchName,gitConfiguration)
+                    .changeBranch(branchType.getValue() + "/" + branchName, gitConfiguration)
                     .gitInfo()
                     .runPomCommands(cmd -> {
-                        commons.getLog().info("dev: "+developmentVersion);
-                        commons.getLog().info("version: "+PomUtils.getVersion(baseDir));
+                        commons.getLog().info("dev: " + developmentVersion);
+                        commons.getLog().info("version: " + PomUtils.getVersion(baseDir));
                     }, pomCommand)
-                    .mergeBranches(branchType.getValue()+"/"+branchName,BranchType.DEVELOPMENT.getValue())
-                    .changeBranch(BranchType.DEVELOPMENT.getValue(),gitConfiguration)
+                    .mergeBranches(branchType.getValue() + "/" + branchName, BranchType.DEVELOPMENT.getValue())
+                    .changeBranch(BranchType.DEVELOPMENT.getValue(), gitConfiguration)
                     .runPomCommands(cmd -> {
                         try {
                             pomCommand
@@ -228,13 +230,19 @@ public class BranchMojo {
                     .commit(commitMessage)
                     .gitInfo()
                     .when(command -> {
-                        if(!commons.isPushChanges()){
+                        if (!commons.isPushChanges()) {
                             gitConfiguration.setPushChanges(false);
                             commons.getLog().warn("Skipping push");
                             command.skipNext();
                         }
                     })
                     .push(gitConfiguration)
+                    .runShellCommands(cmd -> {
+                        List<String[]> properties = Arrays.asList(
+                                new String[]{"MUTATIO_FEAT_VERSION", featVersion.toString()},
+                                new String[]{"MUTATIO_MERGED_BRANCH", branchType.getValue() + "/" + branchName});
+                        cmd.setBuildProperties(properties);
+                    }, new ShellCommand(commons.getLog()))
                     .close();
 
         } catch (IOException e) {
