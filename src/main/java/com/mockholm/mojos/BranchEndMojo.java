@@ -45,16 +45,17 @@ public class BranchEndMojo extends AbstractMojo {
     /**
      * The Branch type {@link BranchType}
      */
-    @Parameter(property = "branchType", name = "branchType")
-    private BranchType branchType;
+    @Parameter(property = "branchType", name = "branchType", defaultValue = "FEAT")
+    private String branchType;
 
     public void execute() {
+        getLog().info(String.format("Creating branch of %s",branchType));
         new BranchMojo(new MojoCommons()
                 .withLog(getLog())
                 .withProject(project)
                 .withSettings(settings)
                 .withPushChanges(pushChanges)
                 .withRepoIdentity(repoIdentity)
-        ).executeEnd(branchType);
+        ).executeEnd(BranchType.valueOf(branchType));
     }
 }

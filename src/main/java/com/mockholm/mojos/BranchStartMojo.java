@@ -42,8 +42,8 @@ public class BranchStartMojo extends AbstractMojo {
     /**
      * The Branch type {@link BranchType}
      */
-    @Parameter(property = "branchType", name = "branchType")
-    private BranchType branchType;
+    @Parameter(property = "branchType", name = "branchType", defaultValue = "FEAT")
+    private String branchType;
 
 
 
@@ -55,12 +55,13 @@ public class BranchStartMojo extends AbstractMojo {
     private boolean pushChanges;
 
     public void execute() {
+        getLog().info(String.format("Creating branch of %s",branchType));
         new BranchMojo(new MojoCommons()
                 .withLog(getLog())
                 .withRepoIdentity(repoIdentity)
                 .withPushChanges(pushChanges)
                 .withProject(project)
                 .withSettings(settings))
-                .executeStart(branchType);
+                .executeStart(BranchType.valueOf(branchType));
     }
 }
