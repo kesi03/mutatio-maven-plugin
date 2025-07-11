@@ -19,6 +19,9 @@ import com.jcraft.jsch.*;
 
 import java.io.File;
 import java.net.URISyntaxException;
+import java.nio.file.Path;
+import java.util.List;
+import java.util.function.Function;
 
 /**
  * Utility class for handling Git authentication and repository connection details.
@@ -348,14 +351,25 @@ public class GitCredentialUtils {
     }
 
     /**
-     * Gets a default  SshdSessionFactory
+     * Gets a default SshdSessionFactory
      *
      * @return a configured SshdSessionFactory instance
      */
     public static SshdSessionFactory getDefaultSshdSessionFactory() {
+        System.out.println("user.home = " + System.getProperty("user.home"));
+        File sshDir = new File(System.getProperty("user.home"), ".ssh");
+        System.out.println("SSH Directory: " + sshDir.getAbsolutePath());
+        File knownHosts = new File(System.getProperty("user.home"), ".ssh/known_hosts");
+        System.out.println("Known Hosts File: " +knownHosts);
+
         return new SshdSessionFactoryBuilder()
                 .setHomeDirectory(new File(System.getProperty("user.home")))
-                .setSshDirectory(new File(System.getProperty("user.home"), ".ssh"))
+                .setSshDirectory(sshDir)
+                .setDefaultKnownHostsFiles(homeDir -> {
+                    System.out.println("homeDir: " +homeDir);
+                    Path knownHostsPath = new File(homeDir, "known_hosts").toPath();
+                    return List.of(knownHostsPath);
+                })
                 .build(null);
     }
 
