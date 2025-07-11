@@ -1222,9 +1222,10 @@ public class GitCommand {
      */
     public GitCommand push(GitConfiguration configuration) {
         info("PUSH");
-        if(!configuration.isPushChanges()){
-            return this;
-        }
+//        if(!configuration.isPushChanges()){
+//            info("Do not push");
+//            return this;
+//        }
 
 
 
