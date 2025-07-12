@@ -1370,6 +1370,7 @@ public class GitCommand {
             GitCredentialUtils.addSSHRemote(git);
             git.fetch()
                     .setRemote(SSH_REMOTE)
+                    .setRefSpecs(new RefSpec("+refs/heads/*:refs/remotes/origin/*"))
                     .setTransportConfigCallback(sshCallback)
                     .call();
             info("Fetched changes from origin.");
@@ -1635,7 +1636,12 @@ public class GitCommand {
             }
 
             // Checkout target branch
-            git.checkout().setName(to).setStartPoint("origin/" + to).call();
+            git.checkout()
+                    .setCreateBranch(true)
+                    .setName(from)
+                    .setStartPoint("origin/" + from)
+                    .call();
+
             info("Checked out target branch: " + to);
 
             // Merge source branch into target
