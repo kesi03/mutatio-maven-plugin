@@ -1638,8 +1638,8 @@ public class GitCommand {
             // Checkout target branch
             git.checkout()
                     .setCreateBranch(true)
-                    .setName(from)
-                    .setStartPoint("origin/" + from)
+                    .setName(to)
+                    .setStartPoint("origin/" + to)
                     .call();
 
             info("Checked out target branch: " + to);
