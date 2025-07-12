@@ -17,10 +17,7 @@ import org.jetbrains.annotations.NotNull;
 import java.io.File;
 import java.io.IOException;
 import java.net.URISyntaxException;
-import java.util.Collection;
-import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
+import java.util.*;
 import java.util.function.Consumer;
 
 import static com.mockholm.utils.GitCredentialUtils.SSH_REMOTE;
@@ -1647,6 +1644,7 @@ public class GitCommand {
             // Merge source branch into target
             MergeResult result = git.merge()
                     .include(git.getRepository().findRef(from))
+                    .setCommit(false)
                     .call();
 
             switch (result.getMergeStatus()) {
@@ -1655,7 +1653,24 @@ public class GitCommand {
                 case MERGED_SQUASHED:
                     info("Merge successful: " + from + " → " + to);
                     break;
+                case CONFLICTING:
+                    Map<String, int[][]> conflicts = result.getConflicts();
+                    warn("Merge conflicts found:");
+
+                    for (Map.Entry<String, int[][]> entry : conflicts.entrySet()) {
+                        String filePath = entry.getKey();
+                        int[][] ranges = entry.getValue();
+                        info("Conflict in file: " + filePath);
+                        for (int i = 0; i < ranges.length; i++) {
+                            info("  Conflict #" + (i + 1) + ":");
+                            info("    Base range:   " + ranges[i][0]);
+                            info("    Ours range:   " + ranges[i][1]);
+                            info("    Theirs range: " + ranges[i][2]);
+                        }
+                    }
+                    break;
                 default:
+
                     error("Merge failed with status: " + result.getMergeStatus(), null);
                     throw new RuntimeException("Merge failed: " + result.getMergeStatus());
             }
