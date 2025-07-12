@@ -1695,6 +1695,18 @@ public class GitCommand {
         return this;
     }
 
+    private String resolveDefaultBranch(Git git) throws GitAPIException {
+        List<Ref> remoteRefs = git.branchList().setListMode(ListBranchCommand.ListMode.REMOTE).call();
+        for (Ref ref : remoteRefs) {
+            String name = ref.getName();
+            if (name.endsWith("/main")) return "main";
+            if (name.endsWith("/master")) return "master";
+        }
+        throw new IllegalStateException("No default branch found (main/master)");
+    }
+
+
+
     private void resolveConflictsInFavorOfFrom(Git git, MergeResult result, String from) throws IOException, GitAPIException {
         Map<String, int[][]> conflicts = result.getConflicts();
         if (conflicts == null || conflicts.isEmpty()) return;
