@@ -5,7 +5,7 @@
     <groupId>io.github.kesi03</groupId>
     <artifactId>mutatio-maven-plugin</artifactId>
     <packaging>maven-plugin</packaging>
-    <version>1.0.9-rc.10</version>
+    <version>1.0.10</version>
     <name>mutatio-maven-plugin Maven Mojo</name>
     <url>http://maven.apache.org</url>
     <description>A Maven plugin for creating git branches.</description>
@@ -107,6 +107,16 @@
             <groupId>org.apache.maven</groupId>
             <artifactId>maven-model-builder</artifactId>
             <version>${maven-model.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.squareup.okhttp3</groupId>
+            <artifactId>okhttp</artifactId>
+            <version>4.12.0</version> <!-- Use latest stable version -->
+        </dependency>
+        <dependency>
+            <groupId>com.squareup.okhttp3</groupId>
+            <artifactId>logging-interceptor</artifactId>
+            <version>4.12.0</version>
         </dependency>
         <dependency>
             <groupId>junit</groupId>
