@@ -151,4 +151,51 @@ public class PipelineCommands {
         return this;
     }
 
+    /**
+     * Updates a GitHub Actions repository variable using the GitHub REST API and OkHttp.
+     *
+     * @param repoOwner     The owner of the GitHub repository (e.g. "my-org" or "my-username")
+     * @param repoName      The name of the GitHub repository
+     * @param variableName  The name of the GitHub Actions variable to update
+     * @param variableValue The new value to assign to the variable
+     * @param githubToken   The GitHub personal access token with appropriate repository scopes
+     * @throws IOException  If an error occurs while performing the HTTP request
+     */
+    public PipelineCommands updateGitHubActionsVariable(
+            String repoOwner,      // e.g., "my-org" or "my-username"
+            String repoName,       // e.g., "my-repo"
+            String variableName,   // e.g., "MY_ENV_VAR"
+            String variableValue,  // e.g., "new_value_123"
+            String githubToken     // GitHub Personal Access Token (PAT)
+    ) throws IOException {
+
+        OkHttpClient client = new OkHttpClient();
+
+        String url = String.format(
+                "https://api.github.com/repos/%s/%s/actions/variables/%s",
+                repoOwner, repoName, variableName
+        );
+
+        String jsonBody = String.format("{ \"name\": \"%s\", \"value\": \"%s\" }", variableName, variableValue);
+        RequestBody body = RequestBody.create(jsonBody, MediaType.parse("application/json"));
+
+        Request request = new Request.Builder()
+                .url(url)
+                .put(body)
+                .addHeader("Authorization", "Bearer " + githubToken)
+                .addHeader("Accept", "application/vnd.github+json")
+                .addHeader("X-GitHub-Api-Version", "2022-11-28") // optional but recommended
+                .build();
+
+        try (Response response = client.newCall(request).execute()) {
+            if (response.isSuccessful()) {
+               info("Updated GitHub Actions variable: " + variableName);
+            } else {
+                warn("Failed to update variable. HTTP " + response.code());
+                warn("Response: " + response.body().string());
+            }
+        }
+        return this;
+    }
+
 }
