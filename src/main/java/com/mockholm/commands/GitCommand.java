@@ -10,6 +10,7 @@ import org.eclipse.jgit.lib.ObjectId;
 import org.eclipse.jgit.lib.ObjectReader;
 import org.eclipse.jgit.lib.Ref;
 import org.eclipse.jgit.lib.Repository;
+import org.eclipse.jgit.merge.MergeStrategy;
 import org.eclipse.jgit.transport.*;
 import org.eclipse.jgit.treewalk.CanonicalTreeParser;
 import org.jetbrains.annotations.NotNull;
@@ -1634,7 +1635,7 @@ public class GitCommand {
 
             // Checkout target branch
             git.checkout()
-                    .setCreateBranch(true)
+                    //.setCreateBranch(true)
                     .setName(to)
                     .setStartPoint("origin/" + to)
                     .call();
@@ -1644,8 +1645,11 @@ public class GitCommand {
             // Merge source branch into target
             MergeResult result = git.merge()
                     .include(git.getRepository().findRef(from))
+                    .setStrategy(MergeStrategy.RECURSIVE) // or use default
                     .setCommit(false)
+                    .setFastForward(MergeCommand.FastForwardMode.NO_FF) // allows a merge commit
                     .call();
+
 
             switch (result.getMergeStatus()) {
                 case FAST_FORWARD:
@@ -1668,6 +1672,7 @@ public class GitCommand {
                             info("    Theirs range: " + ranges[i][2]);
                         }
                     }
+                    resolveConflictsInFavorOfFrom(git,result,from);
                     break;
                 default:
 
@@ -1682,6 +1687,38 @@ public class GitCommand {
 
         return this;
     }
+
+    private void resolveConflictsInFavorOfFrom(Git git, MergeResult result, String from) throws IOException, GitAPIException {
+        Map<String, int[][]> conflicts = result.getConflicts();
+        if (conflicts == null || conflicts.isEmpty()) return;
+
+        for (String filePath : conflicts.keySet()) {
+            info("Resolving conflict in: " + filePath + " → favoring 'from' branch");
+
+            // Read file content from 'from' branch
+            ObjectId fromCommitId = git.getRepository().resolve("refs/remotes/origin/" + from + "^{tree}");
+            ObjectReader reader = git.getRepository().newObjectReader();
+            CanonicalTreeParser treeParser = new CanonicalTreeParser();
+            treeParser.reset(reader, fromCommitId);
+
+            // Checkout file from 'from'
+            git.checkout()
+                    .setStartPoint("origin/" + from)
+                    .addPath(filePath)
+                    .call();
+
+            // Stage it
+            git.add().addFilepattern(filePath).call();
+        }
+
+        // Commit after resolution
+        git.commit()
+                .setMessage("Merged '" + from + "' into '" + git.getRepository().getBranch() + "' with conflicts resolved in favor of release branch")
+                .call();
+
+        info("Conflicts resolved in favor of release branch");
+    }
+
 
     /**
      * Merges the specified source branch into the target branch.
