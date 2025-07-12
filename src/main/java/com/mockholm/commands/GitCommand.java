@@ -1633,9 +1633,16 @@ public class GitCommand {
                 fetch(credentialsProvider);
             }
 
+            List<Ref> refs = git.branchList().setListMode(ListBranchCommand.ListMode.ALL).call();
+            for (Ref ref : refs) {
+                info("Found branch ref: " + ref.getName());
+            }
+
+
+
             // Checkout target branch
             git.checkout()
-                    //.setCreateBranch(true)
+                    .setCreateBranch(true)
                     .setName(to)
                     .setStartPoint("origin/" + to)
                     .call();
