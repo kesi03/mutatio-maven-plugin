@@ -183,6 +183,8 @@ public class ReleaseMojo {
 
         String releaseBranch = "release/" + releaseVersion.toString();
 
+        String releaseTag = "release-"+releaseVersion.toString();
+
         String baseDir = commons.getProject().getBasedir().getAbsolutePath();
 
         PomCommand pomCommand = new PomCommand(baseDir, commons.getLog());
@@ -222,12 +224,14 @@ public class ReleaseMojo {
                     .commit(commitMessage.get())
                     .mergeBranches(releaseBranch, mainOrMaster.getValue(),gitConfiguration)
                     .changeBranch(mainOrMaster.getValue(), gitConfiguration)
-                    .createTag("release-" + releaseVersion.toString())
+                    .createTag(releaseTag)
                     .gitInfo()
                     .push(gitConfiguration)
+                    .pushTag(releaseTag,gitConfiguration)
                     .runShellCommands(cmd -> {
                         List<String[]> properties = Arrays.asList(
                                 new String[] { "MUTATIO_RELEASE_BRANCH", releaseBranch },
+                                new String[] { "MUTATIO_RELEASE_TAG", releaseTag },
                                 new String[] { "MUTATIO_RELEASE_VERSION", releaseVersion.toString() });
                         cmd.setBuildProperties(properties);
                     }, new ShellCommand(commons.getLog()))
