@@ -223,11 +223,11 @@ public class ReleaseMojo {
                     .addAllChanges()
                     .commit(commitMessage.get())
                     .mergeBranches(releaseBranch, mainOrMaster.getValue(),gitConfiguration)
-                    .changeBranch(mainOrMaster.getValue(), gitConfiguration)
                     .createTag(releaseTag)
+                    .pushTag(releaseTag,gitConfiguration)
+                    .changeBranch(mainOrMaster.getValue(), gitConfiguration)
                     .gitInfo()
                     .push(gitConfiguration)
-                    .pushTag(releaseTag,gitConfiguration)
                     .runShellCommands(cmd -> {
                         List<String[]> properties = Arrays.asList(
                                 new String[] { "MUTATIO_RELEASE_BRANCH", releaseBranch },
