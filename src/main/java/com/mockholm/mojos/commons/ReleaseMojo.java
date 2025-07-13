@@ -11,8 +11,10 @@ import com.mockholm.utils.CommitUtils;
 import com.mockholm.utils.GitUtils;
 import com.mockholm.utils.SemanticVersion;
 import org.apache.maven.plugin.MojoExecutionException;
+import org.eclipse.jgit.api.Git;
 import org.jetbrains.annotations.NotNull;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
@@ -193,11 +195,15 @@ public class ReleaseMojo {
 
         AtomicReference<String> commitMessage = new AtomicReference<>("");
 
+
+
         try {
             GitConfiguration gitConfiguration = new GitConfiguration()
                     .withServerKey(commons.getProject().getProperties().getProperty("gitProvider"))
                     .withScm(commons.getProject().getScm())
                     .withSettings(commons.getSettings());
+
+            String previouseRelease = GitUtils.getPreviousTag(Git.open(new File(".")), commons.getLog());
 
             new GitCommand(commons.getLog())
                     .changeBranch(releaseBranch, gitConfiguration)

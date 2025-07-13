@@ -1,7 +1,9 @@
 package com.mockholm.commands;
 
+import com.mockholm.config.BranchType;
 import com.mockholm.config.GitConfiguration;
 import com.mockholm.utils.GitCredentialUtils;
+import com.mockholm.utils.GitLogUtils;
 import org.apache.maven.plugin.logging.Log;
 import org.eclipse.jgit.api.*;
 import org.eclipse.jgit.api.errors.GitAPIException;
@@ -11,6 +13,8 @@ import org.eclipse.jgit.lib.ObjectReader;
 import org.eclipse.jgit.lib.Ref;
 import org.eclipse.jgit.lib.Repository;
 import org.eclipse.jgit.merge.MergeStrategy;
+import org.eclipse.jgit.revwalk.RevCommit;
+import org.eclipse.jgit.revwalk.RevWalk;
 import org.eclipse.jgit.transport.*;
 import org.eclipse.jgit.treewalk.CanonicalTreeParser;
 import org.jetbrains.annotations.NotNull;
@@ -18,6 +22,11 @@ import org.jetbrains.annotations.NotNull;
 import java.io.File;
 import java.io.IOException;
 import java.net.URISyntaxException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.StandardOpenOption;
+import java.time.LocalDate;
 import java.util.*;
 import java.util.function.Consumer;
 
@@ -1346,6 +1355,7 @@ public class GitCommand {
         try {
             git.fetch()
                     .setRemote("origin")
+                    .setRefSpecs(new RefSpec("+refs/heads/*:refs/remotes/origin/*"))
                     .setCredentialsProvider(credentialsProvider)
                     .call();
             info("Fetched changes from origin.");
@@ -1830,5 +1840,248 @@ public class GitCommand {
         gitCommandConsumer.accept(this);
         return this;
     }
+
+    /**
+     * Generates release notes between two Git refs and appends them in reverse order to a changelog file.
+     *
+     * @param fromRef         the starting Git reference (e.g., previous tag)
+     * @param toRef           the ending Git reference (e.g., current tag)
+     * @param configuration   the Git configuration for credentials
+     * @param changelogPath   optional path to save the changelog file (defaults to CHANGELOG.md)
+     * @return this GitCommand instance
+     * @throws RuntimeException if Git operations or file writing fails
+     */
+    public GitCommand generateReleaseNotes(String fromRef, String toRef, GitConfiguration configuration, String changelogPath) {
+        if (changelogPath == null || changelogPath.isEmpty()) {
+            changelogPath = "CHANGELOG.md";
+        }
+
+        try {
+            // 🔐 Fetch latest from origin
+            if (GitCredentialUtils.isSSH(configuration.getScm())) {
+                info("Fetching with SSH");
+                fetch(transport -> {
+                    if (transport instanceof SshTransport) {
+                        SshTransport sshTransport = (SshTransport) transport;
+                        sshTransport.setSshSessionFactory(GitCredentialUtils.getSshdSessionFactory(configuration));
+                    }
+                });
+            } else {
+                info("Fetching with HTTPS credentials");
+                CredentialsProvider credentialsProvider =
+                        GitCredentialUtils.getUserProvider(configuration.getSettings().getServer(configuration.getServerKey()).getPassword());
+                    fetch(credentialsProvider);
+            }
+
+            ObjectId from = git.getRepository().resolve(fromRef);
+            ObjectId to = git.getRepository().resolve(toRef);
+            Iterable<RevCommit> commits = git.log().addRange(from, to).call();
+
+            List<String> commitLines = new ArrayList<>();
+            for (RevCommit commit : commits) {
+                String shortHash = commit.getId().abbreviate(7).name();
+                String message = commit.getShortMessage();
+                String author = commit.getAuthorIdent().getName();
+                commitLines.add(String.format("- [%s] %s (by %s)", shortHash, message, author));
+            }
+
+            Collections.reverse(commitLines); // ⏪ Flip the order
+
+            StringBuilder notes = new StringBuilder();
+            notes.append("### ").append(toRef).append("\n\n");
+            for (String line : commitLines) {
+                notes.append(line).append("\n");
+            }
+
+            Files.write(Path.of(changelogPath), notes.toString().getBytes(StandardCharsets.UTF_8),
+                    StandardOpenOption.CREATE, StandardOpenOption.APPEND);
+
+            info("Reverse-ordered release notes appended to " + changelogPath);
+            return this;
+
+        } catch (GitAPIException | IOException e) {
+            error("Failed to generate and export reverse release notes", e);
+            throw new RuntimeException("Release note generation and export failed", e);
+        }
+    }
+
+    /**
+     * Parses and categorizes commits between two refs using Conventional Commit messages.
+     * Appends structured release notes to a changelog file.
+     *
+     * @param fromRef         the starting Git reference (e.g., previous tag)
+     * @param toRef           the ending Git reference (e.g., current tag)
+     * @param configuration   the Git configuration for authentication
+     * @param changelogPath   optional path to the changelog file (defaults to CHANGELOG.md)
+     * @return this GitCommand instance
+     * @throws RuntimeException if Git operations fail
+     */
+    public GitCommand generateCategorizedReleaseNotes(String fromRef, String toRef, GitConfiguration configuration, String changelogPath) {
+        if (changelogPath == null || changelogPath.isEmpty()) {
+            changelogPath = "CHANGELOG.md";
+        }
+
+        Map<String, List<String>> sections = new LinkedHashMap<>();
+        sections.put("✨ Features", new ArrayList<>());
+        sections.put("🐛 Fixes", new ArrayList<>());
+        sections.put("🧹 Chores", new ArrayList<>());
+        sections.put("📚 Documentation", new ArrayList<>());
+        sections.put("🔧 Others", new ArrayList<>());
+
+        try {
+            // ⬇️ Fetch latest history
+            if (GitCredentialUtils.isSSH(configuration.getScm())) {
+                info("Fetching with SSH");
+
+                fetch(transport -> {
+                    if (transport instanceof SshTransport) {
+                        SshTransport sshTransport = (SshTransport) transport;
+                        sshTransport.setSshSessionFactory(GitCredentialUtils.getSshdSessionFactory(configuration));
+                    }
+                });
+            } else {
+                info("Fetching with HTTPS credentials");
+                CredentialsProvider credentialsProvider =
+                        GitCredentialUtils.getUserProvider(configuration.getSettings().getServer(configuration.getServerKey()).getPassword());
+
+                fetch(credentialsProvider);
+            }
+
+            ObjectId from = git.getRepository().resolve(fromRef);
+            ObjectId to = git.getRepository().resolve(toRef);
+            Iterable<RevCommit> commits = git.log().addRange(from, to).call();
+
+            for (RevCommit commit : commits) {
+                String message = commit.getShortMessage();
+                String author = commit.getAuthorIdent().getName();
+                String shortHash = commit.getId().abbreviate(7).name();
+                String entry = String.format("- [%s] %s (by %s)", shortHash, message, author);
+
+                if (message.startsWith("feat:")) {
+                    sections.get("✨ Features").add(entry);
+                } else if (message.startsWith("fix:")) {
+                    sections.get("🐛 Fixes").add(entry);
+                } else if (message.startsWith("chore:")) {
+                    sections.get("🧹 Chores").add(entry);
+                } else if (message.startsWith("docs:")) {
+                    sections.get("📚 Documentation").add(entry);
+                } else {
+                    sections.get("🔧 Others").add(entry);
+                }
+            }
+
+            StringBuilder notes = new StringBuilder();
+            notes.append("### ").append(toRef).append(" — ").append(LocalDate.now()).append("\n\n");
+            for (Map.Entry<String, List<String>> entry : sections.entrySet()) {
+                if (!entry.getValue().isEmpty()) {
+                    notes.append("#### ").append(entry.getKey()).append("\n");
+                    for (String line : entry.getValue()) {
+                        notes.append(line).append("\n");
+                    }
+                    notes.append("\n");
+                }
+            }
+
+            Files.write(Path.of(changelogPath), notes.toString().getBytes(StandardCharsets.UTF_8),
+                    StandardOpenOption.CREATE, StandardOpenOption.APPEND);
+
+            info("Categorized release notes appended to " + changelogPath);
+            return this;
+
+        } catch (GitAPIException | IOException e) {
+            error("Failed to generate categorized release notes", e);
+            throw new RuntimeException("Categorized release note generation failed", e);
+        }
+    }
+
+    /**
+     * Generates structured release notes based on BranchType enum from Conventional Commit prefixes.
+     * Appends categorized notes to a changelog file.
+     *
+     * @param fromRef         the starting Git reference (e.g., previous tag)
+     * @param toRef           the ending Git reference (e.g., current tag)
+     * @param configuration   the Git configuration for authentication
+     * @param changelogPath   optional path to the changelog file (defaults to CHANGELOG.md)
+     * @return this GitCommand instance
+     * @throws RuntimeException if Git operations or file writing fails
+     */
+    public GitCommand generateBranchTypeReleaseNotes(String fromRef, String toRef, GitConfiguration configuration, String changelogPath) {
+        if (changelogPath == null || changelogPath.isEmpty()) {
+            changelogPath = "CHANGELOG.md";
+        }
+
+        Map<BranchType, List<String>> categorizedNotes = new EnumMap<>(BranchType.class);
+        for (BranchType type : BranchType.values()) {
+            categorizedNotes.put(type, new ArrayList<>());
+        }
+
+        try {
+            // Fetch latest from origin
+            if (GitCredentialUtils.isSSH(configuration.getScm())) {
+                info("Fetching with SSH");
+                git.fetch()
+                        .setRemote("origin")
+                        .setTransportConfigCallback(transport -> {
+                            if (transport instanceof SshTransport) {
+                                SshTransport sshTransport = (SshTransport) transport;
+                                sshTransport.setSshSessionFactory(GitCredentialUtils.getSshdSessionFactory(configuration));
+                            }
+                        })
+                        .call();
+            } else {
+                info("Fetching with HTTPS credentials");
+                CredentialsProvider credentialsProvider =
+                        GitCredentialUtils.getUserProvider(configuration.getSettings().getServer(configuration.getServerKey()).getPassword());
+
+                git.fetch()
+                        .setRemote("origin")
+                        .setCredentialsProvider(credentialsProvider)
+                        .call();
+            }
+
+            ObjectId from = git.getRepository().resolve(fromRef);
+            ObjectId to = git.getRepository().resolve(toRef);
+            Iterable<RevCommit> commits = git.log().addRange(from, to).call();
+
+            for (RevCommit commit : commits) {
+                String message = commit.getShortMessage();
+                String author = commit.getAuthorIdent().getName();
+                String shortHash = commit.getId().abbreviate(7).name();
+                String line = String.format("- [%s] %s (by %s)", shortHash, message, author);
+
+                BranchType match = Arrays.stream(BranchType.values())
+                        .filter(type -> message.toLowerCase().startsWith(type.getValue() + ":"))
+                        .findFirst()
+                        .orElse(BranchType.FEATURE); // fallback if no prefix matched
+
+                categorizedNotes.get(match).add(line);
+            }
+
+            StringBuilder notes = new StringBuilder();
+            notes.append("### ").append(toRef).append(" — ").append(LocalDate.now()).append("\n\n");
+
+            for (BranchType type : BranchType.values()) {
+                List<String> entries = categorizedNotes.get(type);
+                if (!entries.isEmpty()) {
+                    notes.append("#### ").append(type.getUppercaseValue()).append("\n");
+                    for (String entry : entries) {
+                        notes.append(entry).append("\n");
+                    }
+                    notes.append("\n");
+                }
+            }
+
+            Files.write(Path.of(changelogPath), notes.toString().getBytes(StandardCharsets.UTF_8),
+                    StandardOpenOption.CREATE, StandardOpenOption.APPEND);
+
+            info("BranchType release notes appended to " + changelogPath);
+            return this;
+
+        } catch (GitAPIException | IOException e) {
+            error("Failed to generate BranchType release notes", e);
+            throw new RuntimeException("BranchType release note generation failed", e);
+        }
+    }
+
 
 }
