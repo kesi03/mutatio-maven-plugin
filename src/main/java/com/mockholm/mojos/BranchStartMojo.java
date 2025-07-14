@@ -42,7 +42,7 @@ public class BranchStartMojo extends AbstractMojo {
     private String repoIdentity;
 
     /**
-     * The Branch type {@link BranchType}
+     * The Branch type {@link BranchType} The type of branch to create (e.g., feat, fix, chore).
      */
     @Parameter(property = "branchType", name = "branchType", defaultValue = "FEATURE")
     private String branchType;

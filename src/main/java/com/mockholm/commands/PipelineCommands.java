@@ -5,9 +5,16 @@ import okhttp3.*;
 
 import java.io.IOException;
 
+/**
+ * Builder command used to send api calls to pipelines
+ */
 public class PipelineCommands {
     private final Log log;
 
+    /**
+     *
+     * @param log {@link Log}
+     */
     public PipelineCommands(Log log) {
         this.log = log;
     }
@@ -160,6 +167,7 @@ public class PipelineCommands {
      * @param variableValue The new value to assign to the variable
      * @param githubToken   The GitHub personal access token with appropriate repository scopes
      * @throws IOException  If an error occurs while performing the HTTP request
+     * @return {@link PipelineCommands} as part of a build chain
      */
     public PipelineCommands updateGitHubActionsVariable(
             String repoOwner,      // e.g., "my-org" or "my-username"

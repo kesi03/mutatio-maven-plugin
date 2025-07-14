@@ -35,8 +35,8 @@ public class BranchMojo {
     /**
      * Start will create a new branch such as feat/jira-123456
      *
-     * @param branchType {@link BranchType}
-     * @param optionalCommitMessage {@link Optional<String>}
+     * @param branchType {@link BranchType} The type of branch to create (e.g., feat, fix, chore).
+     * @param optionalCommitMessage {@link Optional} optional commit message instead of using default
      */
     public void executeStart(@NotNull BranchType branchType,Optional<String> optionalCommitMessage) {
         commons.getLog().info("currentBranch: " + GitUtils.getCurrentBranch());
