@@ -1649,14 +1649,18 @@ public class GitCommand {
                 info("Found branch ref: " + ref.getName());
             }
 
+            boolean branchExists = refs.stream()
+                    .anyMatch(ref -> ref.getName().endsWith("/" + to));
 
 
             // Checkout target branch
-            git.checkout()
-                    .setCreateBranch(true)
-                    .setName(to)
-                    .setStartPoint("origin/" + to)
-                    .call();
+            CheckoutCommand checkout = git.checkout().setName(to);
+            if (!branchExists) {
+                checkout.setCreateBranch(true)
+                        .setStartPoint("origin/" + to);
+            }
+            checkout.call();
+
 
             info("Checked out target branch: " + to);
 
