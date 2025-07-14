@@ -2,8 +2,6 @@ package com.mockholm.mojos;
 
 import com.mockholm.commands.GitCommand;
 import com.mockholm.config.*;
-import com.mockholm.models.MojoCommons;
-import com.mockholm.mojos.commons.ReleaseMojo;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugins.annotations.LifecyclePhase;
 import org.apache.maven.plugins.annotations.Mojo;
@@ -45,7 +43,7 @@ public class ReleaseNotesMojo extends AbstractMojo {
      * Used to determine which release tag you wish to create notes for
      */
     @Parameter(property = "release", name ="release")
-    private String releaseTag;
+    private String release;
 
     public void execute() {
         GitConfiguration gitConfiguration = new GitConfiguration()
@@ -56,16 +54,16 @@ public class ReleaseNotesMojo extends AbstractMojo {
             switch(notesType){
                 case BRANCH:
                     new GitCommand(getLog())
-                            .generateBranchTypeReleaseNotes(releaseTag,gitConfiguration,".")
+                            .generateBranchTypeReleaseNotes(release,gitConfiguration,".")
                             .close();
                     break;
                 case CATEGORY:
-                    new GitCommand(getLog()).generateCategorizedReleaseNotes(releaseTag,gitConfiguration,".")
+                    new GitCommand(getLog()).generateCategorizedReleaseNotes(release,gitConfiguration,".")
                             .close();
                 case STANDARD:
                 default:
                     new GitCommand(getLog())
-                            .generateReleaseNotes(releaseTag,gitConfiguration,".")
+                            .generateReleaseNotes(release,gitConfiguration,".")
                             .close();
             }
 
