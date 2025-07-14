@@ -28,8 +28,6 @@
             <url>https://maven.pkg.github.com/kesi03/mutatio-maven-plugin</url>
         </repository>
     </distributionManagement>
-
-
     <licenses>
         <license>
             <name>The Apache License, Version 2.0</name>

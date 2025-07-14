@@ -35,9 +35,10 @@ public class BranchMojo {
     /**
      * Start will create a new branch such as feat/jira-123456
      *
-     * @param branchType
+     * @param branchType {@link BranchType}
+     * @param optionalCommitMessage {@link Optional<String>}
      */
-    public void executeStart(@NotNull BranchType branchType) {
+    public void executeStart(@NotNull BranchType branchType,Optional<String> optionalCommitMessage) {
         commons.getLog().info("currentBranch: " + GitUtils.getCurrentBranch());
         commons.getLog().info("Current version: " + commons.getProject().getVersion());
 
@@ -82,7 +83,7 @@ public class BranchMojo {
                 .footer("")
                 .build();
 
-        String commitMessage = CommitUtils.format(commit);
+        String commitMessage = optionalCommitMessage.orElse(CommitUtils.format(commit));
 
         commons.getLog().info("Commit: " + commitMessage);
 

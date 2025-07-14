@@ -10,6 +10,8 @@ import org.apache.maven.plugins.annotations.Parameter;
 import org.apache.maven.project.MavenProject;
 import org.apache.maven.settings.Settings;
 
+import java.util.Optional;
+
 /**
  * This Mojo is used to start the branch.
  * It is typically called at the beginning of the build process to initialize a branch.
@@ -54,6 +56,12 @@ public class BranchStartMojo extends AbstractMojo {
     @Parameter(property = "pushChanges", name ="pushChanges", defaultValue = "true")
     private boolean pushChanges;
 
+    /**
+     * Optional commit message instead of using a default.
+     */
+    @Parameter(property = "commitMessage", name ="commitMessage")
+    private Optional<String> commitMessage;
+
     public void execute() {
         getLog().info(String.format("Creating branch of %s",branchType));
         new BranchMojo(new MojoCommons()
@@ -62,6 +70,6 @@ public class BranchStartMojo extends AbstractMojo {
                 .withPushChanges(pushChanges)
                 .withProject(project)
                 .withSettings(settings))
-                .executeStart(BranchType.valueOf(branchType));
+                .executeStart(BranchType.valueOf(branchType),commitMessage);
     }
 }
