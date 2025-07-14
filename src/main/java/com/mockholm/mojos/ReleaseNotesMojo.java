@@ -44,7 +44,7 @@ public class ReleaseNotesMojo extends AbstractMojo {
     /**
      * Used to determine which release tag you wish to create notes for
      */
-    @Parameter(property = "releaseTag", name ="releaseTag")
+    @Parameter(property = "release", name ="release")
     private String releaseTag;
 
     public void execute() {
