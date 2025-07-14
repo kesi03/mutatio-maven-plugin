@@ -19,7 +19,10 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.URISyntaxException;
 import java.util.*;
+
+import static com.mockholm.utils.GitCredentialUtils.SSH_REMOTE;
 
 /**
  * Utility class for performing common Git operations using JGit.
@@ -60,8 +63,10 @@ public class GitUtils {
 
             refSpecs.add(new RefSpec("+refs/tags/*:refs/tags/*"));
 
+            GitCredentialUtils.addSSHRemote(git);
+
             FetchCommand fetchCmd = git.fetch()
-                    .setRemote("origin")
+                    .setRemote(SSH_REMOTE)
                     .setRefSpecs(refSpecs);
 
             if (GitCredentialUtils.isSSH(configuration.getScm())) {
@@ -120,6 +125,8 @@ public class GitUtils {
         } catch (GitAPIException | IOException e) {
             GitLogUtils.error("Failed to retrieve previous valid Git tag", e);
             throw new RuntimeException("Unable to get previous valid tag", e);
+        } catch (URISyntaxException e) {
+            throw new RuntimeException(e);
         }
     }
 

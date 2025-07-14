@@ -54,16 +54,23 @@ public class ReleaseNotesMojo extends AbstractMojo {
             switch(notesType){
                 case BRANCH:
                     new GitCommand(getLog())
-                            .generateBranchTypeReleaseNotes(release,gitConfiguration,".")
+                            .changeBranch(BranchType.DEVELOPMENT.getValue(), gitConfiguration)
+                            .gitInfo()
+                            .generateBranchTypeReleaseNotes("release-"+release,gitConfiguration,"changelog.md")
                             .close();
                     break;
                 case CATEGORY:
-                    new GitCommand(getLog()).generateCategorizedReleaseNotes(release,gitConfiguration,".")
+                    new GitCommand(getLog())
+                            .changeBranch(BranchType.DEVELOPMENT.getValue(), gitConfiguration)
+                            .gitInfo()
+                            .generateCategorizedReleaseNotes("release-"+release,gitConfiguration,"changelog.md")
                             .close();
                 case STANDARD:
                 default:
                     new GitCommand(getLog())
-                            .generateReleaseNotes(release,gitConfiguration,".")
+                            .changeBranch(BranchType.DEVELOPMENT.getValue(), gitConfiguration)
+                            .gitInfo()
+                            .generateReleaseNotes("release-"+release,gitConfiguration,"changelog.md")
                             .close();
             }
 

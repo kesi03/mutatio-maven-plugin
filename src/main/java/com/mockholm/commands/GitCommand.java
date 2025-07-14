@@ -46,16 +46,6 @@ public class GitCommand {
 
     private boolean shouldSkipNext = false;
 
-    public GitCommand skipNext() {
-        this.shouldSkipNext = true;
-        return this;
-    }
-
-    public boolean shouldSkip() {
-        return this.shouldSkipNext;
-    }
-
-
     /**
      * Creates a GitCommand instance using the current working directory as the repository path.
      *
@@ -81,6 +71,7 @@ public class GitCommand {
         this.log = null;
     }
 
+
     /**
      * Creates a GitCommand instance using the current working directory
      * and the specified logger for output.
@@ -98,7 +89,7 @@ public class GitCommand {
      * and the provided logger for output. If the path is null or blank, defaults
      * to the current working directory.
      *
-     * @param log the logger instance for reporting messages
+     * @param log     the logger instance for reporting messages
      * @param gitPath the path to the Git repository; blank or null defaults to current directory
      * @throws IOException if the Git repository cannot be opened from the given path
      */
@@ -108,6 +99,15 @@ public class GitCommand {
                 .orElse(".");
         this.git = Git.open(new File(resolvedPath));
         this.log = log;
+    }
+
+    public GitCommand skipNext() {
+        this.shouldSkipNext = true;
+        return this;
+    }
+
+    public boolean shouldSkip() {
+        return this.shouldSkipNext;
     }
 
     /**
@@ -137,7 +137,7 @@ public class GitCommand {
      * or prints to standard error if no logger is available.
      *
      * @param msg the error message to log
-     * @param t the throwable to include in the log output
+     * @param t   the throwable to include in the log output
      */
     private void error(String msg, Throwable t) {
         if (log != null) log.error(msg, t);
@@ -169,33 +169,34 @@ public class GitCommand {
 
     /**
      * Changes the current Git branch to the specified target branch
+     *
      * @param targetBranch  the name of the branch to switch to
      * @param configuration the git configuration needed for credentials
      * @return GitCommand
      */
-    public GitCommand changeBranch(String targetBranch,GitConfiguration configuration) {
-        if(GitCredentialUtils.isSSH(configuration.getScm())){
+    public GitCommand changeBranch(String targetBranch, GitConfiguration configuration) {
+        if (GitCredentialUtils.isSSH(configuration.getScm())) {
             info("using ssh");
-            return changeBranch(targetBranch,transport -> {
+            return changeBranch(targetBranch, transport -> {
                 if (transport instanceof SshTransport) {
                     SshTransport sshTransport = (SshTransport) transport;
                     sshTransport.setSshSessionFactory(GitCredentialUtils.getSshdSessionFactory(configuration));
                 }
             });
-        }else{
+        } else {
             info("using credentials");
-            CredentialsProvider credentialsProvider=GitCredentialUtils.getUserProvider(configuration.getSettings().getServer(configuration.getServerKey()).getPassword());
-            return changeBranch(targetBranch,credentialsProvider);
+            CredentialsProvider credentialsProvider = GitCredentialUtils.getUserProvider(configuration.getSettings().getServer(configuration.getServerKey()).getPassword());
+            return changeBranch(targetBranch, credentialsProvider);
         }
     }
 
     /**
-      using HTTPS authentication.
+     * using HTTPS authentication.
      * If the branch exists locally, it switches directly. If not, it attempts to fetch from origin.
      * If the branch exists remotely, it is created locally and tracked. Otherwise, a new local-only
      * branch is created.
      *
-     * @param targetBranch the name of the branch to switch to
+     * @param targetBranch        the name of the branch to switch to
      * @param credentialsProvider the credentials provider for remote access (HTTPS)
      * @return this GitCommand instance
      * @throws RuntimeException if an I/O or Git operation fails
@@ -256,7 +257,7 @@ public class GitCommand {
      * branch is created.
      *
      * @param targetBranch the name of the branch to switch to
-     * @param sshCallback the SSH transport configuration callback for remote access
+     * @param sshCallback  the SSH transport configuration callback for remote access
      * @return this GitCommand instance
      * @throws RuntimeException if an I/O or Git operation fails
      */
@@ -280,7 +281,7 @@ public class GitCommand {
 
             String remoteUrl = GitCredentialUtils.getRemoteUrl(git);
 
-            info("remoteUrl: "+remoteUrl);
+            info("remoteUrl: " + remoteUrl);
 
             GitCredentialUtils.addSSHRemote(git);
 
@@ -343,7 +344,7 @@ public class GitCommand {
                     .getPassword();
             CredentialsProvider credentialsProvider = GitCredentialUtils.getUserProvider(password);
 
-            return createBranch(branchName,credentialsProvider);
+            return createBranch(branchName, credentialsProvider);
         }
     }
 
@@ -351,7 +352,7 @@ public class GitCommand {
      * Creates a new Git branch with the given name. If the branch exists remotely on origin,
      * it will be created locally and set to track the remote branch. If not, a local-only branch is created.
      *
-     * @param branchName the name of the branch to create
+     * @param branchName          the name of the branch to create
      * @param credentialsProvider the credentials provider for remote operations (HTTPS)
      * @return this GitCommand instance
      * @throws RuntimeException if the branch creation fails
@@ -404,7 +405,7 @@ public class GitCommand {
      * Creates a new Git branch with the given name. If the branch exists remotely on origin,
      * it will be created locally and set to track the remote branch. If not, a local-only branch is created.
      *
-     * @param branchName the name of the branch to create
+     * @param branchName  the name of the branch to create
      * @param sshCallback the SSH transport configuration callback for authentication
      * @return this GitCommand instance
      * @throws RuntimeException if the branch creation fails
@@ -468,7 +469,7 @@ public class GitCommand {
     public GitCommand pushBranch(GitConfiguration configuration) {
         try {
             String currentBranch = git.getRepository().getBranch();
-            
+
             RefSpec branchRefSpec = new RefSpec(currentBranch + ":" + currentBranch);
 
             if (GitCredentialUtils.isSSH(configuration.getScm())) {
@@ -572,7 +573,7 @@ public class GitCommand {
      * @return this GitCommand instance
      * @throws RuntimeException if the push operation fails
      */
-    
+
     public GitCommand pushTag(String tag, GitConfiguration configuration) {
         if (GitCredentialUtils.isSSH(configuration.getScm())) {
             info("Using SSH to push tag: " + tag);
@@ -595,7 +596,7 @@ public class GitCommand {
     /**
      * Pushes the specified tag to the origin remote using HTTPS authentication.
      *
-     * @param tag the name of the tag to push
+     * @param tag                 the name of the tag to push
      * @param credentialsProvider the credentials provider for remote access
      * @return this GitCommand instance
      * @throws RuntimeException if the push operation fails
@@ -619,7 +620,7 @@ public class GitCommand {
     /**
      * Pushes the specified tag to the origin remote using SSH authentication.
      *
-     * @param tag the name of the tag to push
+     * @param tag         the name of the tag to push
      * @param sshCallback the SSH transport configuration callback
      * @return this GitCommand instance
      * @throws RuntimeException if the push operation fails
@@ -663,7 +664,7 @@ public class GitCommand {
 
             if (GitCredentialUtils.isSSH(configuration.getScm())) {
                 info("Using SSH to delete tag '" + tag + "' from origin");
-                return removeTag(tag,transport -> {
+                return removeTag(tag, transport -> {
                     if (transport instanceof SshTransport) {
                         SshTransport sshTransport = (SshTransport) transport;
                         sshTransport.setSshSessionFactory(GitCredentialUtils.getSshdSessionFactory(configuration));
@@ -676,7 +677,7 @@ public class GitCommand {
                         .getPassword();
                 CredentialsProvider credentialsProvider = GitCredentialUtils.getUserProvider(password);
                 info("Tag '" + tag + "' deleted from origin.");
-               return removeTag(tag,credentialsProvider);
+                return removeTag(tag, credentialsProvider);
             }
 
 
@@ -689,7 +690,7 @@ public class GitCommand {
     /**
      * Removes the specified tag both locally and remotely using HTTPS authentication.
      *
-     * @param tag the name of the tag to remove
+     * @param tag                 the name of the tag to remove
      * @param credentialsProvider the credentials provider for remote access
      * @return this GitCommand instance
      * @throws RuntimeException if the tag removal fails
@@ -727,7 +728,7 @@ public class GitCommand {
     /**
      * Removes the specified tag both locally and remotely using SSH authentication.
      *
-     * @param tag the name of the tag to remove
+     * @param tag         the name of the tag to remove
      * @param sshCallback the SSH transport configuration callback
      * @return this GitCommand instance
      * @throws RuntimeException if the tag removal fails
@@ -776,7 +777,7 @@ public class GitCommand {
     public boolean checkIfBranchExists(String branchName, GitConfiguration configuration) {
         if (GitCredentialUtils.isSSH(configuration.getScm())) {
             info("Using SSH to check existence of branch: " + branchName);
-            return checkIfBranchExists(branchName,transport -> {
+            return checkIfBranchExists(branchName, transport -> {
                 if (transport instanceof SshTransport) {
                     SshTransport sshTransport = (SshTransport) transport;
                     sshTransport.setSshSessionFactory(GitCredentialUtils.getSshdSessionFactory(configuration));
@@ -789,7 +790,7 @@ public class GitCommand {
                     .getPassword();
             CredentialsProvider credentialsProvider = GitCredentialUtils.getUserProvider(password);
 
-            return checkIfBranchExists(branchName,credentialsProvider);
+            return checkIfBranchExists(branchName, credentialsProvider);
         }
 
     }
@@ -798,7 +799,7 @@ public class GitCommand {
      * Checks whether a branch with the given name exists locally or remotely on origin,
      * performing a fetch operation using HTTPS authentication before checking.
      *
-     * @param branchName the name of the branch to check
+     * @param branchName          the name of the branch to check
      * @param credentialsProvider the credentials provider for remote access
      * @return {@code true} if the branch exists locally or on origin; {@code false} otherwise
      * @throws RuntimeException if an error occurs during the check
@@ -836,7 +837,7 @@ public class GitCommand {
      * Checks whether a branch with the given name exists locally or remotely on origin,
      * performing a fetch operation using SSH authentication before checking.
      *
-     * @param branchName the name of the branch to check
+     * @param branchName  the name of the branch to check
      * @param sshCallback the SSH transport configuration callback
      * @return {@code true} if the branch exists locally or on origin; {@code false} otherwise
      * @throws RuntimeException if an error occurs during the check
@@ -882,7 +883,7 @@ public class GitCommand {
     public boolean checkIfTagExists(String tagName, GitConfiguration configuration) {
         if (GitCredentialUtils.isSSH(configuration.getScm())) {
             info("Using SSH to check existence of tag: " + tagName);
-            return checkIfTagExists(tagName,transport -> {
+            return checkIfTagExists(tagName, transport -> {
                 if (transport instanceof SshTransport) {
                     SshTransport sshTransport = (SshTransport) transport;
                     sshTransport.setSshSessionFactory(GitCredentialUtils.getSshdSessionFactory(configuration));
@@ -895,7 +896,7 @@ public class GitCommand {
                     .getPassword();
             CredentialsProvider credentialsProvider = GitCredentialUtils.getUserProvider(password);
 
-            return checkIfTagExists(tagName,credentialsProvider);
+            return checkIfTagExists(tagName, credentialsProvider);
         }
     }
 
@@ -903,7 +904,7 @@ public class GitCommand {
      * Checks whether a Git tag exists locally or on the origin remote,
      * using HTTPS authentication.
      *
-     * @param tagName the name of the tag to check
+     * @param tagName             the name of the tag to check
      * @param credentialsProvider the credentials provider for remote access
      * @return {@code true} if the tag exists locally or remotely; {@code false} otherwise
      * @throws RuntimeException if the check operation fails
@@ -939,7 +940,7 @@ public class GitCommand {
      * Checks whether a Git tag exists locally or on the origin remote,
      * using SSH authentication.
      *
-     * @param tagName the name of the tag to check
+     * @param tagName     the name of the tag to check
      * @param sshCallback the SSH transport configuration callback
      * @return {@code true} if the tag exists locally or remotely; {@code false} otherwise
      * @throws RuntimeException if the check operation fails
@@ -1192,7 +1193,7 @@ public class GitCommand {
 
             ObjectId newHead = repo.resolve("HEAD^{tree}");
             if (Objects.equals(oldHead, newHead)) {
-               info("Pull completed: repository already up to date. No changes.");
+                info("Pull completed: repository already up to date. No changes.");
                 return this;
             }
 
@@ -1234,7 +1235,6 @@ public class GitCommand {
 //            info("Do not push");
 //            return this;
 //        }
-
 
 
         if (GitCredentialUtils.isSSH(configuration.getScm())) {
@@ -1415,8 +1415,8 @@ public class GitCommand {
     /**
      * Deletes the specified branch from the origin remote using the appropriate authentication strategy.
      *
-     * @param branchName     the name of the branch to delete remotely
-     * @param configuration  the Git configuration containing authentication and server details
+     * @param branchName    the name of the branch to delete remotely
+     * @param configuration the Git configuration containing authentication and server details
      * @return this GitCommand instance
      * @throws RuntimeException if the branch deletion fails
      */
@@ -1442,7 +1442,7 @@ public class GitCommand {
     /**
      * Deletes the specified branch from the origin remote using HTTPS authentication.
      *
-     * @param branchName the name of the branch to delete remotely
+     * @param branchName          the name of the branch to delete remotely
      * @param credentialsProvider the credentials provider for remote access
      * @return this GitCommand instance
      * @throws RuntimeException if the branch deletion fails
@@ -1466,7 +1466,7 @@ public class GitCommand {
     /**
      * Deletes the specified branch from the origin remote using SSH authentication.
      *
-     * @param branchName the name of the branch to delete remotely
+     * @param branchName  the name of the branch to delete remotely
      * @param sshCallback the SSH transport configuration callback
      * @return this GitCommand instance
      * @throws RuntimeException if the branch deletion fails
@@ -1520,7 +1520,7 @@ public class GitCommand {
     public GitCommand deleteRemoteTag(String tagName, GitConfiguration configuration) {
         if (GitCredentialUtils.isSSH(configuration.getScm())) {
             info("Using SSH to delete remote tag: " + tagName);
-            return deleteRemoteTag(tagName,transport -> {
+            return deleteRemoteTag(tagName, transport -> {
                 if (transport instanceof SshTransport) {
                     SshTransport sshTransport = (SshTransport) transport;
                     sshTransport.setSshSessionFactory(GitCredentialUtils.getSshdSessionFactory(configuration));
@@ -1539,7 +1539,7 @@ public class GitCommand {
     /**
      * Deletes the specified tag from the origin remote using HTTPS authentication.
      *
-     * @param tagName the name of the tag to delete remotely
+     * @param tagName             the name of the tag to delete remotely
      * @param credentialsProvider the credentials provider for remote access
      * @return this GitCommand instance
      * @throws RuntimeException if the tag deletion fails
@@ -1563,7 +1563,7 @@ public class GitCommand {
     /**
      * Deletes the specified tag from the origin remote using SSH authentication.
      *
-     * @param tagName the name of the tag to delete remotely
+     * @param tagName     the name of the tag to delete remotely
      * @param sshCallback the SSH transport configuration callback
      * @return this GitCommand instance
      * @throws RuntimeException if the tag deletion fails
@@ -1603,7 +1603,7 @@ public class GitCommand {
      * This is a flexible way to apply operations or transformations on a Maven POM file.
      *
      * @param pomCommandConsumer the consumer that defines how the command should be executed
-     * @param command the PomCommand instance to execute
+     * @param command            the PomCommand instance to execute
      * @return this GitCommand instance
      */
     public GitCommand runPomCommands(@NotNull Consumer<PomCommand> pomCommandConsumer, PomCommand command) {
@@ -1616,7 +1616,7 @@ public class GitCommand {
      * Run a shell command.
      *
      * @param shellComandConsumer the consumer that defines how the command should be executed
-     * @param command the ShellCommand instance to execute
+     * @param command             the ShellCommand instance to execute
      * @return this GitCommand instance
      */
     public GitCommand runShellCommands(@NotNull Consumer<ShellCommand> shellComandConsumer, ShellCommand command) {
@@ -1694,7 +1694,7 @@ public class GitCommand {
                             info("    Theirs range: " + ranges[i][2]);
                         }
                     }
-                    resolveConflictsInFavorOfFrom(git,result,from);
+                    resolveConflictsInFavorOfFrom(git, result, from);
                     break;
                 default:
 
@@ -1719,7 +1719,6 @@ public class GitCommand {
         }
         throw new IllegalStateException("No default branch found (main/master)");
     }
-
 
 
     private void resolveConflictsInFavorOfFrom(Git git, MergeResult result, String from) throws IOException, GitAPIException {
@@ -1761,7 +1760,7 @@ public class GitCommand {
      * Any other merge status will result in a failure and throw an exception.
      *
      * @param from the name of the source branch to merge from
-     * @param to the name of the target branch to merge into (will be checked out)
+     * @param to   the name of the target branch to merge into (will be checked out)
      * @return this GitCommand instance
      * @throws RuntimeException if the checkout or merge operation fails
      */
@@ -1803,8 +1802,8 @@ public class GitCommand {
      * The {@code exclusion} parameter is accepted but not currently applied within the logic.
      * You may enhance this method later to exclude specific files or paths during the merge.
      *
-     * @param from the name of the source branch to merge from
-     * @param to the name of the target branch to merge into (this branch will be checked out)
+     * @param from      the name of the source branch to merge from
+     * @param to        the name of the target branch to merge into (this branch will be checked out)
      * @param exclusion a placeholder for an exclusion rule, currently unused
      * @return this GitCommand instance
      * @throws RuntimeException if the checkout or merge operation fails
@@ -1841,7 +1840,7 @@ public class GitCommand {
         return this;
     }
 
-    public GitCommand when(Consumer<GitCommand> gitCommandConsumer){
+    public GitCommand when(Consumer<GitCommand> gitCommandConsumer) {
         gitCommandConsumer.accept(this);
         return this;
     }
@@ -1849,27 +1848,27 @@ public class GitCommand {
     /**
      * Generates release notes between two Git refs and appends them in reverse order to a changelog file.
      *
-     * @param toRef           the ending Git reference (e.g., current tag)
-     * @param configuration   the Git configuration for credentials
-     * @param changelogPath   optional path to save the changelog file (defaults to CHANGELOG.md)
+     * @param toRef         the ending Git reference (e.g., current tag)
+     * @param configuration the Git configuration for credentials
+     * @param changelogPath optional path to save the changelog file (defaults to CHANGELOG.md)
      * @return this GitCommand instance
      * @throws RuntimeException if Git operations or file writing fails
      */
     public GitCommand generateReleaseNotes(String toRef, GitConfiguration configuration, String changelogPath) {
-        String fromRef= GitUtils.getPreviousTag(git,configuration,log);
-        return generateReleaseNotes(fromRef,toRef,configuration,changelogPath);
+        String fromRef = GitUtils.getPreviousTag(git, configuration, log);
+        return generateReleaseNotes(fromRef, toRef, configuration, changelogPath);
     }
 
-        /**
-         * Generates release notes between two Git refs and appends them in reverse order to a changelog file.
-         *
-         * @param fromRef         the starting Git reference (e.g., previous tag)
-         * @param toRef           the ending Git reference (e.g., current tag)
-         * @param configuration   the Git configuration for credentials
-         * @param changelogPath   optional path to save the changelog file (defaults to CHANGELOG.md)
-         * @return this GitCommand instance
-         * @throws RuntimeException if Git operations or file writing fails
-         */
+    /**
+     * Generates release notes between two Git refs and appends them in reverse order to a changelog file.
+     *
+     * @param fromRef       the starting Git reference (e.g., previous tag)
+     * @param toRef         the ending Git reference (e.g., current tag)
+     * @param configuration the Git configuration for credentials
+     * @param changelogPath optional path to save the changelog file (defaults to CHANGELOG.md)
+     * @return this GitCommand instance
+     * @throws RuntimeException if Git operations or file writing fails
+     */
     public GitCommand generateReleaseNotes(String fromRef, String toRef, GitConfiguration configuration, String changelogPath) {
         if (changelogPath == null || changelogPath.isEmpty()) {
             changelogPath = "CHANGELOG.md";
@@ -1888,13 +1887,23 @@ public class GitCommand {
             } else {
                 info("Fetching with HTTPS credentials");
                 CredentialsProvider credentialsProvider =
-                        GitCredentialUtils.getUserProvider(configuration.getSettings().getServer(configuration.getServerKey()).getPassword());
-                    fetch(credentialsProvider);
+                        GitCredentialUtils.getUserProvider(
+                                configuration.getSettings()
+                                        .getServer(configuration.getServerKey())
+                                        .getPassword()
+                        );
+                fetch(credentialsProvider);
             }
 
-            ObjectId from = git.getRepository().resolve(fromRef);
-            ObjectId to = git.getRepository().resolve(toRef);
-            Iterable<RevCommit> commits = git.log().addRange(from, to).call();
+            // Resolve refs safely to commits
+            RevWalk revWalk = new RevWalk(git.getRepository());
+            info("fromRef: "+fromRef);
+            RevCommit fromCommit = revWalk.parseCommit(git.getRepository().resolve(fromRef));
+            info("toRef: "+toRef);
+            RevCommit toCommit = revWalk.parseCommit(git.getRepository().resolve(toRef));
+
+            Iterable<RevCommit> commits = git.log().addRange(fromCommit, toCommit).call();
+            revWalk.close();
 
             List<String> commitLines = new ArrayList<>();
             for (RevCommit commit : commits) {
@@ -1904,7 +1913,8 @@ public class GitCommand {
                 commitLines.add(String.format("- [%s] %s (by %s)", shortHash, message, author));
             }
 
-            Collections.reverse(commitLines); // ⏪ Flip the order
+            // ⏪ Reverse order
+            Collections.reverse(commitLines);
 
             StringBuilder notes = new StringBuilder();
             notes.append("### ").append(toRef).append("\n\n");
@@ -1912,8 +1922,12 @@ public class GitCommand {
                 notes.append(line).append("\n");
             }
 
-            Files.write(Path.of(changelogPath), notes.toString().getBytes(StandardCharsets.UTF_8),
-                    StandardOpenOption.CREATE, StandardOpenOption.APPEND);
+            Files.write(
+                    Path.of(changelogPath),
+                    notes.toString().getBytes(StandardCharsets.UTF_8),
+                    StandardOpenOption.CREATE,
+                    StandardOpenOption.APPEND
+            );
 
             info("Reverse-ordered release notes appended to " + changelogPath);
             return this;
@@ -1928,28 +1942,28 @@ public class GitCommand {
      * Parses and categorizes commits between two refs using Conventional Commit messages.
      * Appends structured release notes to a changelog file.
      *
-     * @param toRef           the ending Git reference (e.g., current tag)
-     * @param configuration   the Git configuration for authentication
-     * @param changelogPath   optional path to the changelog file (defaults to CHANGELOG.md)
+     * @param toRef         the ending Git reference (e.g., current tag)
+     * @param configuration the Git configuration for authentication
+     * @param changelogPath optional path to the changelog file (defaults to CHANGELOG.md)
      * @return this GitCommand instance
      * @throws RuntimeException if Git operations fail
      */
     public GitCommand generateCategorizedReleaseNotes(String toRef, GitConfiguration configuration, String changelogPath) {
-        String fromRef= GitUtils.getPreviousTag(git,configuration,log);
-        return generateCategorizedReleaseNotes(fromRef,toRef,configuration,changelogPath);
+        String fromRef = GitUtils.getPreviousTag(git, configuration, log);
+        return generateCategorizedReleaseNotes(fromRef, toRef, configuration, changelogPath);
     }
 
-        /**
-         * Parses and categorizes commits between two refs using Conventional Commit messages.
-         * Appends structured release notes to a changelog file.
-         *
-         * @param fromRef         the starting Git reference (e.g., previous tag)
-         * @param toRef           the ending Git reference (e.g., current tag)
-         * @param configuration   the Git configuration for authentication
-         * @param changelogPath   optional path to the changelog file (defaults to CHANGELOG.md)
-         * @return this GitCommand instance
-         * @throws RuntimeException if Git operations fail
-         */
+    /**
+     * Parses and categorizes commits between two refs using Conventional Commit messages.
+     * Appends structured release notes to a changelog file.
+     *
+     * @param fromRef       the starting Git reference (e.g., previous tag)
+     * @param toRef         the ending Git reference (e.g., current tag)
+     * @param configuration the Git configuration for authentication
+     * @param changelogPath optional path to the changelog file (defaults to CHANGELOG.md)
+     * @return this GitCommand instance
+     * @throws RuntimeException if Git operations fail
+     */
     public GitCommand generateCategorizedReleaseNotes(String fromRef, String toRef, GitConfiguration configuration, String changelogPath) {
         if (changelogPath == null || changelogPath.isEmpty()) {
             changelogPath = "CHANGELOG.md";
@@ -1966,7 +1980,6 @@ public class GitCommand {
             // ⬇️ Fetch latest history
             if (GitCredentialUtils.isSSH(configuration.getScm())) {
                 info("Fetching with SSH");
-
                 fetch(transport -> {
                     if (transport instanceof SshTransport) {
                         SshTransport sshTransport = (SshTransport) transport;
@@ -1976,14 +1989,21 @@ public class GitCommand {
             } else {
                 info("Fetching with HTTPS credentials");
                 CredentialsProvider credentialsProvider =
-                        GitCredentialUtils.getUserProvider(configuration.getSettings().getServer(configuration.getServerKey()).getPassword());
-
+                        GitCredentialUtils.getUserProvider(
+                                configuration.getSettings()
+                                        .getServer(configuration.getServerKey())
+                                        .getPassword()
+                        );
                 fetch(credentialsProvider);
             }
 
-            ObjectId from = git.getRepository().resolve(fromRef);
-            ObjectId to = git.getRepository().resolve(toRef);
-            Iterable<RevCommit> commits = git.log().addRange(from, to).call();
+            // ✅ Peel tags and ensure commits
+            RevWalk revWalk = new RevWalk(git.getRepository());
+            RevCommit fromCommit = revWalk.parseCommit(git.getRepository().resolve(fromRef));
+            RevCommit toCommit = revWalk.parseCommit(git.getRepository().resolve(toRef));
+
+            Iterable<RevCommit> commits = git.log().addRange(fromCommit, toCommit).call();
+            revWalk.close();
 
             for (RevCommit commit : commits) {
                 String message = commit.getShortMessage();
@@ -2016,8 +2036,12 @@ public class GitCommand {
                 }
             }
 
-            Files.write(Path.of(changelogPath), notes.toString().getBytes(StandardCharsets.UTF_8),
-                    StandardOpenOption.CREATE, StandardOpenOption.APPEND);
+            Files.write(
+                    Path.of(changelogPath),
+                    notes.toString().getBytes(StandardCharsets.UTF_8),
+                    StandardOpenOption.CREATE,
+                    StandardOpenOption.APPEND
+            );
 
             info("Categorized release notes appended to " + changelogPath);
             return this;
@@ -2032,28 +2056,28 @@ public class GitCommand {
      * Generates structured release notes based on BranchType enum from Conventional Commit prefixes.
      * Appends categorized notes to a changelog file.
      *
-     * @param toRef           the ending Git reference (e.g., current tag)
-     * @param configuration   the Git configuration for authentication
-     * @param changelogPath   optional path to the changelog file (defaults to CHANGELOG.md)
+     * @param toRef         the ending Git reference (e.g., current tag)
+     * @param configuration the Git configuration for authentication
+     * @param changelogPath optional path to the changelog file (defaults to CHANGELOG.md)
      * @return this GitCommand instance
      * @throws RuntimeException if Git operations or file writing fails
      */
     public GitCommand generateBranchTypeReleaseNotes(String toRef, GitConfiguration configuration, String changelogPath) {
-        String fromRef= GitUtils.getPreviousTag(git,configuration,log);
-        return generateBranchTypeReleaseNotes(fromRef,configuration,changelogPath);
+        String fromRef = GitUtils.getPreviousTag(git, configuration, log);
+        return generateBranchTypeReleaseNotes(fromRef,toRef, configuration, changelogPath);
     }
 
-        /**
-         * Generates structured release notes based on BranchType enum from Conventional Commit prefixes.
-         * Appends categorized notes to a changelog file.
-         *
-         * @param fromRef         the starting Git reference (e.g., previous tag)
-         * @param toRef           the ending Git reference (e.g., current tag)
-         * @param configuration   the Git configuration for authentication
-         * @param changelogPath   optional path to the changelog file (defaults to CHANGELOG.md)
-         * @return this GitCommand instance
-         * @throws RuntimeException if Git operations or file writing fails
-         */
+    /**
+     * Generates structured release notes based on BranchType enum from Conventional Commit prefixes.
+     * Appends categorized notes to a changelog file.
+     *
+     * @param fromRef       the starting Git reference (e.g., previous tag)
+     * @param toRef         the ending Git reference (e.g., current tag)
+     * @param configuration the Git configuration for authentication
+     * @param changelogPath optional path to the changelog file (defaults to CHANGELOG.md)
+     * @return this GitCommand instance
+     * @throws RuntimeException if Git operations or file writing fails
+     */
     public GitCommand generateBranchTypeReleaseNotes(String fromRef, String toRef, GitConfiguration configuration, String changelogPath) {
         if (changelogPath == null || changelogPath.isEmpty()) {
             changelogPath = "CHANGELOG.md";
@@ -2065,7 +2089,7 @@ public class GitCommand {
         }
 
         try {
-            // Fetch latest from origin
+            // ⬇️ Fetch latest from origin
             if (GitCredentialUtils.isSSH(configuration.getScm())) {
                 info("Fetching with SSH");
                 git.fetch()
@@ -2080,17 +2104,23 @@ public class GitCommand {
             } else {
                 info("Fetching with HTTPS credentials");
                 CredentialsProvider credentialsProvider =
-                        GitCredentialUtils.getUserProvider(configuration.getSettings().getServer(configuration.getServerKey()).getPassword());
-
+                        GitCredentialUtils.getUserProvider(
+                                configuration.getSettings()
+                                        .getServer(configuration.getServerKey())
+                                        .getPassword()
+                        );
                 git.fetch()
                         .setRemote("origin")
                         .setCredentialsProvider(credentialsProvider)
                         .call();
             }
 
-            ObjectId from = git.getRepository().resolve(fromRef);
-            ObjectId to = git.getRepository().resolve(toRef);
-            Iterable<RevCommit> commits = git.log().addRange(from, to).call();
+            // ✅ Resolve refs to commits
+            RevWalk revWalk = new RevWalk(git.getRepository());
+            RevCommit fromCommit = revWalk.parseCommit(git.getRepository().resolve(fromRef));
+            RevCommit toCommit = revWalk.parseCommit(git.getRepository().resolve(toRef));
+            Iterable<RevCommit> commits = git.log().addRange(fromCommit, toCommit).call();
+            revWalk.close();
 
             for (RevCommit commit : commits) {
                 String message = commit.getShortMessage();
@@ -2101,7 +2131,7 @@ public class GitCommand {
                 BranchType match = Arrays.stream(BranchType.values())
                         .filter(type -> message.toLowerCase().startsWith(type.getValue() + ":"))
                         .findFirst()
-                        .orElse(BranchType.FEATURE); // fallback if no prefix matched
+                        .orElse(BranchType.FEATURE); // Fallback
 
                 categorizedNotes.get(match).add(line);
             }
@@ -2120,8 +2150,12 @@ public class GitCommand {
                 }
             }
 
-            Files.write(Path.of(changelogPath), notes.toString().getBytes(StandardCharsets.UTF_8),
-                    StandardOpenOption.CREATE, StandardOpenOption.APPEND);
+            Files.write(
+                    Path.of(changelogPath),
+                    notes.toString().getBytes(StandardCharsets.UTF_8),
+                    StandardOpenOption.CREATE,
+                    StandardOpenOption.APPEND
+            );
 
             info("BranchType release notes appended to " + changelogPath);
             return this;
@@ -2131,6 +2165,5 @@ public class GitCommand {
             throw new RuntimeException("BranchType release note generation failed", e);
         }
     }
-
 
 }
