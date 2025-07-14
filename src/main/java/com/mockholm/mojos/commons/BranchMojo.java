@@ -217,7 +217,7 @@ public class BranchMojo {
                         commons.getLog().info("dev: " + developmentVersion);
                         commons.getLog().info("version: " + PomUtils.getVersion(baseDir));
                     }, pomCommand)
-                    .mergeBranches(branchType.getValue() + "/" + branchName, BranchType.DEVELOPMENT.getValue())
+                    .mergeBranches(branchType.getValue() + "/" + branchName, BranchType.DEVELOPMENT.getValue(),gitConfiguration)
                     .changeBranch(BranchType.DEVELOPMENT.getValue(), gitConfiguration)
                     .runPomCommands(cmd -> {
                         try {
