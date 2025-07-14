@@ -203,7 +203,7 @@ public class ReleaseMojo {
                     .withScm(commons.getProject().getScm())
                     .withSettings(commons.getSettings());
 
-            String previouseRelease = GitUtils.getPreviousTag(Git.open(new File(".")), commons.getLog());
+//            String previouseRelease = GitUtils.getPreviousTag(Git.open(new File(".")), gitConfiguration,commons.getLog());
 
             new GitCommand(commons.getLog())
                     .changeBranch(releaseBranch, gitConfiguration)
@@ -226,6 +226,7 @@ public class ReleaseMojo {
                         commitMessage.set(CommitUtils.format(commit));
                         commons.getLog().info("Commit: " + commitMessage);
                     }, pomCommand)
+                    //release notes
                     .addAllChanges()
                     .commit(commitMessage.get())
                     .mergeBranches(releaseBranch, mainOrMaster.getValue(),gitConfiguration)

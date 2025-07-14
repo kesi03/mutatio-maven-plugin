@@ -52,12 +52,38 @@ public class GitUtils {
      * @return the name of the previous valid tag, or null if none found
      * @throws RuntimeException if Git operations fail
      */
-    public static String getPreviousTag(Git git,Log log) {
+    public static String getPreviousTag(Git git,GitConfiguration configuration,Log log) {
 
         try {
+            GitLogUtils.setLog(log);
+            List<RefSpec> refSpecs = new ArrayList<>();
+
+            refSpecs.add(new RefSpec("+refs/tags/*:refs/tags/*"));
+
+            FetchCommand fetchCmd = git.fetch()
+                    .setRemote("origin")
+                    .setRefSpecs(refSpecs);
+
+            if (GitCredentialUtils.isSSH(configuration.getScm())) {
+                GitLogUtils.info("SSH fetch tags");
+                fetchCmd.setTransportConfigCallback(transport -> {
+                    if (transport instanceof SshTransport) {
+                        SshTransport sshTransport = (SshTransport) transport;
+                        sshTransport.setSshSessionFactory(GitCredentialUtils.getSshdSessionFactory(configuration));
+                    }
+                });
+            } else {
+                GitLogUtils.info("HTTPS fetch tags");
+                CredentialsProvider credentialsProvider =
+                        GitCredentialUtils.getUserProvider(configuration.getSettings()
+                                .getServer(configuration.getServerKey()).getPassword());
+                fetchCmd.setCredentialsProvider(credentialsProvider);
+            }
+
+            fetchCmd.call();
+
 
             List<Ref> allTags = git.tagList().call();
-            GitLogUtils.setLog(log);
 
             if (allTags.isEmpty()) {
                 GitLogUtils.info("No tags found.");

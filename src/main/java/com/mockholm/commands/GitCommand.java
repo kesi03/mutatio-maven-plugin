@@ -4,6 +4,7 @@ import com.mockholm.config.BranchType;
 import com.mockholm.config.GitConfiguration;
 import com.mockholm.utils.GitCredentialUtils;
 import com.mockholm.utils.GitLogUtils;
+import com.mockholm.utils.GitUtils;
 import org.apache.maven.plugin.logging.Log;
 import org.eclipse.jgit.api.*;
 import org.eclipse.jgit.api.errors.GitAPIException;
@@ -1844,13 +1845,27 @@ public class GitCommand {
     /**
      * Generates release notes between two Git refs and appends them in reverse order to a changelog file.
      *
-     * @param fromRef         the starting Git reference (e.g., previous tag)
      * @param toRef           the ending Git reference (e.g., current tag)
      * @param configuration   the Git configuration for credentials
      * @param changelogPath   optional path to save the changelog file (defaults to CHANGELOG.md)
      * @return this GitCommand instance
      * @throws RuntimeException if Git operations or file writing fails
      */
+    public GitCommand generateReleaseNotes(String toRef, GitConfiguration configuration, String changelogPath) {
+        String fromRef= GitUtils.getPreviousTag(git,configuration,log);
+        return generateReleaseNotes(fromRef,toRef,configuration,changelogPath);
+    }
+
+        /**
+         * Generates release notes between two Git refs and appends them in reverse order to a changelog file.
+         *
+         * @param fromRef         the starting Git reference (e.g., previous tag)
+         * @param toRef           the ending Git reference (e.g., current tag)
+         * @param configuration   the Git configuration for credentials
+         * @param changelogPath   optional path to save the changelog file (defaults to CHANGELOG.md)
+         * @return this GitCommand instance
+         * @throws RuntimeException if Git operations or file writing fails
+         */
     public GitCommand generateReleaseNotes(String fromRef, String toRef, GitConfiguration configuration, String changelogPath) {
         if (changelogPath == null || changelogPath.isEmpty()) {
             changelogPath = "CHANGELOG.md";
@@ -1909,13 +1924,28 @@ public class GitCommand {
      * Parses and categorizes commits between two refs using Conventional Commit messages.
      * Appends structured release notes to a changelog file.
      *
-     * @param fromRef         the starting Git reference (e.g., previous tag)
      * @param toRef           the ending Git reference (e.g., current tag)
      * @param configuration   the Git configuration for authentication
      * @param changelogPath   optional path to the changelog file (defaults to CHANGELOG.md)
      * @return this GitCommand instance
      * @throws RuntimeException if Git operations fail
      */
+    public GitCommand generateCategorizedReleaseNotes(String toRef, GitConfiguration configuration, String changelogPath) {
+        String fromRef= GitUtils.getPreviousTag(git,configuration,log);
+        return generateCategorizedReleaseNotes(fromRef,toRef,configuration,changelogPath);
+    }
+
+        /**
+         * Parses and categorizes commits between two refs using Conventional Commit messages.
+         * Appends structured release notes to a changelog file.
+         *
+         * @param fromRef         the starting Git reference (e.g., previous tag)
+         * @param toRef           the ending Git reference (e.g., current tag)
+         * @param configuration   the Git configuration for authentication
+         * @param changelogPath   optional path to the changelog file (defaults to CHANGELOG.md)
+         * @return this GitCommand instance
+         * @throws RuntimeException if Git operations fail
+         */
     public GitCommand generateCategorizedReleaseNotes(String fromRef, String toRef, GitConfiguration configuration, String changelogPath) {
         if (changelogPath == null || changelogPath.isEmpty()) {
             changelogPath = "CHANGELOG.md";
@@ -1998,13 +2028,28 @@ public class GitCommand {
      * Generates structured release notes based on BranchType enum from Conventional Commit prefixes.
      * Appends categorized notes to a changelog file.
      *
-     * @param fromRef         the starting Git reference (e.g., previous tag)
      * @param toRef           the ending Git reference (e.g., current tag)
      * @param configuration   the Git configuration for authentication
      * @param changelogPath   optional path to the changelog file (defaults to CHANGELOG.md)
      * @return this GitCommand instance
      * @throws RuntimeException if Git operations or file writing fails
      */
+    public GitCommand generateBranchTypeReleaseNotes(String toRef, GitConfiguration configuration, String changelogPath) {
+        String fromRef= GitUtils.getPreviousTag(git,configuration,log);
+        return generateBranchTypeReleaseNotes(fromRef,configuration,changelogPath);
+    }
+
+        /**
+         * Generates structured release notes based on BranchType enum from Conventional Commit prefixes.
+         * Appends categorized notes to a changelog file.
+         *
+         * @param fromRef         the starting Git reference (e.g., previous tag)
+         * @param toRef           the ending Git reference (e.g., current tag)
+         * @param configuration   the Git configuration for authentication
+         * @param changelogPath   optional path to the changelog file (defaults to CHANGELOG.md)
+         * @return this GitCommand instance
+         * @throws RuntimeException if Git operations or file writing fails
+         */
     public GitCommand generateBranchTypeReleaseNotes(String fromRef, String toRef, GitConfiguration configuration, String changelogPath) {
         if (changelogPath == null || changelogPath.isEmpty()) {
             changelogPath = "CHANGELOG.md";
