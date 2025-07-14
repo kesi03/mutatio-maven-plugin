@@ -83,7 +83,9 @@ public class BranchMojo {
                 .footer("")
                 .build();
 
-        String commitMessage = optionalCommitMessage.orElse(CommitUtils.format(commit));
+        String commitMessage = optionalCommitMessage
+                .filter(msg -> !msg.equals("default"))
+                .orElse(CommitUtils.format(commit));
 
         commons.getLog().info("Commit: " + commitMessage);
 
