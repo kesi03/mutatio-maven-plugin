@@ -294,7 +294,7 @@ public class GitCommand {
                     .setListMode(ListBranchCommand.ListMode.REMOTE)
                     .call()
                     .stream()
-                    .anyMatch(ref -> ref.getName().equals("refs/remotes/origin/" + targetBranch));
+                    .anyMatch(ref -> ref.getName().equals("refs/remotes/"+SSH_REMOTE+"/" + targetBranch));
 
             if (remoteExists) {
                 git.fetch().setRemote(SSH_REMOTE).setTransportConfigCallback(sshCallback).call();
