@@ -60,7 +60,7 @@ public class BranchStartMojo extends AbstractMojo {
      * Optional commit message instead of using a default.
      */
     @Parameter(property = "commitMessage", name ="commitMessage")
-    private Optional<String> commitMessage;
+    private String commitMessage;
 
     public void execute() {
         getLog().info(String.format("Creating branch of %s",branchType));
@@ -70,6 +70,6 @@ public class BranchStartMojo extends AbstractMojo {
                 .withPushChanges(pushChanges)
                 .withProject(project)
                 .withSettings(settings))
-                .executeStart(BranchType.valueOf(branchType),commitMessage);
+                .executeStart(BranchType.valueOf(branchType),Optional.ofNullable(commitMessage));
     }
 }
