@@ -1677,6 +1677,7 @@ public class GitCommand {
                 case FAST_FORWARD:
                 case MERGED:
                 case MERGED_SQUASHED:
+                case ALREADY_UP_TO_DATE:
                     info("Merge successful: " + from + " → " + to);
                     break;
                 case CONFLICTING:
