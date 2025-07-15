@@ -297,23 +297,23 @@ public class GitCommand {
                     .anyMatch(ref -> ref.getName().equals("refs/remotes/"+SSH_REMOTE+"/" + targetBranch));
 
             if (remoteExists) {
+                info("has remote");
                 git.fetch().setRemote(SSH_REMOTE).setTransportConfigCallback(sshCallback).call();
                 git.checkout()
                         .setCreateBranch(true)
                         .setName(targetBranch)
                         .setUpstreamMode(CreateBranchCommand.SetupUpstreamMode.TRACK)
-                        .setStartPoint("origin/" + targetBranch)
+                        .setStartPoint(SSH_REMOTE+"/" + targetBranch)
                         .call();
                 info("Created and switched to branch '" + targetBranch + "' tracking origin.");
             } else {
+                info("has no remote");
                 git.checkout().setCreateBranch(true).setName(targetBranch).call();
                 info("Created and switched to new local branch '" + targetBranch + "'.");
             }
-        } catch (IOException | GitAPIException e) {
+        } catch (IOException | GitAPIException | URISyntaxException e) {
             error("Failed to change branch to '" + targetBranch + "'", e);
             throw new RuntimeException("Failed to change branch", e);
-        } catch (URISyntaxException e) {
-            throw new RuntimeException(e);
         }
         return this;
     }
