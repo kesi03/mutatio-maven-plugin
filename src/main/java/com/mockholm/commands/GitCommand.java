@@ -3,7 +3,6 @@ package com.mockholm.commands;
 import com.mockholm.config.BranchType;
 import com.mockholm.config.GitConfiguration;
 import com.mockholm.utils.GitCredentialUtils;
-import com.mockholm.utils.GitLogUtils;
 import com.mockholm.utils.GitUtils;
 import org.apache.maven.plugin.logging.Log;
 import org.eclipse.jgit.api.*;
@@ -1624,6 +1623,13 @@ public class GitCommand {
         return this;
     }
 
+    /**
+     *
+     * @param from the branch which you wish to merge
+     * @param to the branch you are merging with
+     * @param configuration {@link GitConfiguration} configuration
+     * @return {@link GitCommand} to be able to create a chain
+     */
     public GitCommand mergeBranches(@NotNull String from, @NotNull String to, GitConfiguration configuration) {
         try {
             // Determine fetch strategy
@@ -1711,6 +1717,12 @@ public class GitCommand {
         return this;
     }
 
+    /**
+     *
+     * @param git {@link Git}
+     * @return String the default branch main or master
+     * @throws GitAPIException {@link GitAPIException}
+     */
     private String resolveDefaultBranch(Git git) throws GitAPIException {
         List<Ref> remoteRefs = git.branchList().setListMode(ListBranchCommand.ListMode.REMOTE).call();
         for (Ref ref : remoteRefs) {
@@ -1721,7 +1733,14 @@ public class GitCommand {
         throw new IllegalStateException("No default branch found (main/master)");
     }
 
-
+    /**
+     * Resolves conflicts in favor of the from branch
+     * @param git {@link Git} git object
+     * @param result {@link MergeResult} result from a merge
+     * @param from String
+     * @throws IOException {@link IOException}
+     * @throws GitAPIException {@link GitAPIException}
+     */
     private void resolveConflictsInFavorOfFrom(Git git, MergeResult result, String from) throws IOException, GitAPIException {
         Map<String, int[][]> conflicts = result.getConflicts();
         if (conflicts == null || conflicts.isEmpty()) return;
@@ -1841,6 +1860,11 @@ public class GitCommand {
         return this;
     }
 
+    /**
+     *
+     * @param gitCommandConsumer {@link Consumer}
+     * @return GitCommand {@link GitCommand}
+     */
     public GitCommand when(Consumer<GitCommand> gitCommandConsumer) {
         gitCommandConsumer.accept(this);
         return this;
