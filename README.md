@@ -290,3 +290,61 @@ Used to determine which kind of release notes are wanted.
 | `BRANCH`   | Release notes sorted by latest first and by `BranchType`.   |
 
 ---
+
+## Dependencies
+
+### 🧩 `CollateArtifactsMojo`
+
+**Description:**  
+This Mojo is used to report which artifacts are created when a release branch is created.
+
+🖥️  **execute**
+```bash
+mvn clean mutatio:collate-artifacts -Drelease=1.0.10
+```
+
+---
+
+#### ⚙️ Parameters
+
+| Parameter         | Description                                                                                      | Property         | Default   | Required | Readonly |
+|-------------------|--------------------------------------------------------------------------------------------------|------------------|-----------|----------|----------|
+| `currentProject`  | The Maven project being built. Used to access project properties and configuration.             | `${project}`     | —         | —        | ✅        |
+| `session`         | The Maven session. See: `MavenSession` | `${session}`     | —         | —        | ✅        |
+| `projectBuilder`  | The Maven project builder. See: `ProjectBuilder` | `${projectBuilder}` | —     | —        | ✅        |
+| `settings`        | The settings for the Maven build, including repository configurations from `settings.xml`.      | `${settings}`    | —         | —        | ✅        |
+| `repoIdentity`    | The identity of the repository used to determine the branch to start. Typically a unique name.   | `repoIdentity`   | —         | —        | —        |
+| `release`         | The release version to be used when ending the release branch. Typically a version number.       | `release`        | —         | —        | —        |
+| `mainOrMaster`    | The type of branch to be used as the main or master branch after the release.                   | `mainOrMaster`   | `MASTER`  | —        | —        |
+
+---
+
+---
+
+### 🧩 `UpdateDependenciesMojo`
+
+**Description:**  
+This Mojo is used to update dependencies in the project-based artifact identifiers.  
+It is typically called to ensure that the project uses the latest versions of its dependencies.
+
+🖥️  **execute**
+```bash
+mvn clean mutatio:update-dependencies -Drelease=1.0.10
+```
+
+---
+
+#### ⚙️ Parameters
+
+| Parameter         | Description                                                                                      | Property         | Default   | Required | Readonly |
+|-------------------|--------------------------------------------------------------------------------------------------|------------------|-----------|----------|----------|
+| `currentProject`  | The Maven project being built. Used to access project properties and configuration.             | `${project}`     | —         | —        | ✅        |
+| `session`         | The Maven session. See: [`MavenSession`](https://maven.apache.org/ref/current/maven-core/apidocs/org/apache/maven/execution/MavenSession.html) | `${session}`     | —         | —        | ✅        |
+| `projectBuilder`  | The Maven project builder. See: `ProjectBuilder` | `${projectBuilder}` | —     | —        | ✅        |
+| `settings`        | The settings for the Maven build, including repository configurations from `settings.xml`.      | `${settings}`    | —         | —        | ✅        |
+| `repoIdentity`    | The identity of the repository used to determine the branch to start. Typically a unique name.   | `repoIdentity`   | —         | —        | —        |
+| `release`         | The release version to be used when ending the release branch. Typically a version number.       | `release`        | —         | —        | —        |
+| `mainOrMaster`    | The type of branch to be used as the main or master branch after the release.                   | `mainOrMaster`   | `MASTER`  | —        | —        |
+| `artifacts`       | The artifacts to be updated. This is a comma-separated list of artifact identifiers.             | `artifacts`      | —         | ✅        | —        |
+
+---

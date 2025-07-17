@@ -18,6 +18,10 @@ import com.mockholm.mojos.commons.DependencyMojoCommons;
 
 import org.apache.maven.plugins.annotations.LifecyclePhase;
 
+/**
+ * This Mojo is used to update dependencies in the project.based artifact identifiers.
+ * It is typically called to ensure that the project uses the latest versions of its dependencies.
+ */
 @Mojo(name = "update-dependencies", defaultPhase = LifecyclePhase.NONE, threadSafe = true)
 public class UpdateDependenciesMojo extends AbstractMojo {
 
