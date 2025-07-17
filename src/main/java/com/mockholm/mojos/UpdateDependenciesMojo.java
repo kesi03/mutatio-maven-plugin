@@ -2,6 +2,8 @@ package com.mockholm.mojos;
 
 import java.io.IOException;
 
+import javax.inject.Inject;
+
 import org.apache.maven.execution.MavenSession;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
@@ -41,7 +43,7 @@ public class UpdateDependenciesMojo extends AbstractMojo {
     /**
      * Project builder {@link ProjectBuilder}
      */
-    @Parameter(defaultValue = "${projectBuilder}", readonly = true)
+    @Inject
     private ProjectBuilder projectBuilder;
 
      /**

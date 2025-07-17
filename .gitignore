@@ -1,3 +1,12 @@
 # Project exclude paths
 /target/
 .idea/
+.vscode/
+*.iml
+*.class
+*.log
+*.jar
+*.war
+*.ear
+*.zip
+*.tar.gz
