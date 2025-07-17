@@ -1,5 +1,7 @@
 package com.mockholm.mojos;
 
+import javax.inject.Inject;
+
 import org.apache.maven.execution.MavenSession;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
@@ -37,7 +39,7 @@ public class CollateArtifactsMojo extends AbstractMojo{
     /**
      * Project builder {@link ProjectBuilder}
      */
-    @Parameter(defaultValue = "${projectBuilder}", readonly = true)
+    @Inject
     private ProjectBuilder projectBuilder;
 
      /**
@@ -68,6 +70,16 @@ public class CollateArtifactsMojo extends AbstractMojo{
     @Parameter(property = "mainOrMaster", name="mainOrMaster", defaultValue = "MASTER")
     private BranchType mainOrMaster;
 
+    
+
+    /**
+     * Executes the Mojo to start the dependency branch creation process.
+     * This method initializes the MojoCommons context and calls the DependencyMojoCommons
+     * to handle the logic of collating artifacts for the release branch.
+     *
+     * @throws MojoExecutionException if an error occurs during execution
+     * @throws MojoFailureException if a failure occurs that prevents execution
+     */
     @Override
     public void execute() throws MojoExecutionException, MojoFailureException {
         getLog().info("Starting dependency branch creation...");
