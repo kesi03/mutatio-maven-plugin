@@ -2,7 +2,7 @@ package com.mockholm.mojos;
 
 import com.mockholm.config.BranchType;
 import com.mockholm.models.MojoCommons;
-import com.mockholm.mojos.commons.ReleaseMojo;
+import com.mockholm.mojos.commons.ReleaseMojoCommons;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
@@ -63,7 +63,7 @@ public class ReleaseEndMojo extends AbstractMojo {
 
     public void execute() throws MojoExecutionException, MojoFailureException {
 
-        new ReleaseMojo(new MojoCommons()
+        new ReleaseMojoCommons(new MojoCommons()
                 .withLog(getLog())
                 .withPushChanges(pushChanges)
                 .withRepoIdentity(repoIdentity)

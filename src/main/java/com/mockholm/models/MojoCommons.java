@@ -1,8 +1,11 @@
 package com.mockholm.models;
 
 import com.mockholm.config.Branch;
+
+import org.apache.maven.execution.MavenSession;
 import org.apache.maven.plugin.logging.Log;
 import org.apache.maven.project.MavenProject;
+import org.apache.maven.project.ProjectBuilder;
 import org.apache.maven.settings.Settings;
 
 /**
@@ -20,6 +23,12 @@ public class MojoCommons {
 
     /** Maven user settings including credentials, repositories, and proxies. */
     private Settings settings;
+
+    /** Current Maven session, providing context for the build lifecycle. */
+    private MavenSession session;
+
+    /** Project builder for constructing Maven project models from POM files. */
+    private ProjectBuilder projectBuilder;
 
     /** The branch configuration, often used for deriving versioning strategy. */
     private Branch branch;
@@ -203,4 +212,63 @@ public class MojoCommons {
     public void setPushChanges(boolean pushChanges) {
         this.pushChanges = pushChanges;
     }
+
+    /**
+     * Sets the Maven session and returns the updated instance.
+     *
+     * @param session the MavenSession object
+     * @return the updated MojoCommons object
+     */
+    public MojoCommons withSession(MavenSession session) {
+        this.session = session;
+        return this;    
+    }
+
+    /**
+     * Sets the Maven session.
+     *
+     * @param session the MavenSession object
+     */
+    public void setSession(MavenSession session) {
+        this.session = session;
+    }
+
+    /**
+     * Gets the current Maven session.
+     *
+     * @return the MavenSession object
+     */
+    public MavenSession getSession() {
+        return session;
+    }
+
+    /**
+     * Sets the project builder and returns the updated instance.
+     *
+     * @param projectBuilder the ProjectBuilder object
+     * @return the updated MojoCommons object
+     */
+    public MojoCommons withProjectBuilder(ProjectBuilder projectBuilder) {
+        this.projectBuilder = projectBuilder;
+        return this;
+    }
+
+    /**
+     * Sets the project builder.
+     *
+     * @param projectBuilder the ProjectBuilder object
+     */
+    public void setProjectBuilder(ProjectBuilder projectBuilder) {
+        this.projectBuilder = projectBuilder;
+    }
+
+    /**
+     * Gets the project builder.
+     *
+     * @return the ProjectBuilder object
+     */
+    public ProjectBuilder getProjectBuilder() {
+        return projectBuilder;
+    }
+    
 }

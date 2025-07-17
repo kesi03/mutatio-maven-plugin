@@ -12,8 +12,9 @@ import org.apache.maven.settings.Settings;
 import java.io.IOException;
 
 /**
- * This Mojo is used to start the release branch.
- * It is typically called at the beginning of the build process to initialize the release branch.
+ * This mojo is used to generate release notes.
+ * It can generate notes based on branch type, categorized changes, or standard release notes.
+ * The type of notes to generate is specified by the {@link ReleaseNotesType} parameter.
  */
 @Mojo(name = "release-notes", aggregator = true, defaultPhase = LifecyclePhase.NONE)
 public class ReleaseNotesMojo extends AbstractMojo {

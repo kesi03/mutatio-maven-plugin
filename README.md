@@ -108,3 +108,185 @@ mvn clean mutatio:update-settings -Did=github-ssh -DuserName=git -DprivateKey="/
     <url>https://github.com/kesi03/mutatio-maven</url>
 </scm>
 ```
+
+# Mojos
+## Branch
+### Branch Start
+**description**
+
+Create a new branch from development.
+
+🖥️ **Execute**
+```bash 
+mvn clean mutatio:start-branch -DbranchType=FEATUTE -DrepoIdentity="JIRA-123455"
+```
+#### ⚙️ Plugin Parameters
+- **`branchType`**  
+  *Type of branch*  
+  
+  **Property:** `branchType`
+  
+  _.e.g._ `${branchType}/${repoIdentiy}`
+
+|Branch Type|Description                                                                            |Example                    |
+|-----------|---------------------------------------------------------------------------------------|---------------------------|
+|ARCHIVE    |Archived or deprecated branches no longer in active development.                       |archive/${repoIdentity}    |
+|BUGFIX     |A branch used for fixing bugs, distinct from general fixes.                            |bugfix/${repoIdentity}     |
+|BUILD      |Branches related to build process changes or fixes.                                    |build/${repoIdentity}      |
+|CHORE      |Branches for chores like dependency updates, formatting, or maintenance.               |chore/${repoIdentity}      |
+|CI         |Branches related to continuous integration configuration.                              |ci/${repoIdentity}         |
+|CODE       |Branches used for general code organization or utilities.                              |code/${repoIdentity}       |
+|DOCS       |Branches containing documentation-related updates.                                     |docs/${repoIdentity}       |
+|EXPERIMENT |Branches for experimental or spike code that may be temporary.                         |experiment/${repoIdentity} |
+|FEATURE    |Branches implementing new features.                                                    |feat/${repoIdentity}       |
+|FIX        |General bug fixes not classified under bugfix or hotfix.                               |fix/${repoIdentity}        |
+|HOTFIX     |Urgent production fixes made directly on a release branch.                             |hotfix/${repoIdentity}     |
+|IMPROVEMENT|Branches for general improvements or minor enhancements.                               |improvement/${repoIdentity}|
+|PERF       |Branches targeting performance enhancements.                                           |perf/${repoIdentity}       |
+|PROTOTYPE  |Prototype branches for proofs of concept or throwaway work.                            |prototype/${repoIdentity}  |
+|REFACTOR   |Branches dedicated to refactoring existing code without adding features or fixing bugs.|refactor/${repoIdentity}   |
+|SANDBOX    |Safe space branches used for individual experimentation or testing.                    |sandbox/${repoIdentity}    |
+|STAGING    |Intermediate branches used for staging pre-production environments.                    |staging/${repoIdentity}    |
+|STYLE      |Branches related to code styling, formatting, or aesthetic cleanup.                    |style/${repoIdentity}      |
+|TEST       |Branches containing test cases or updates to test frameworks.                          |test/${repoIdentity}       |
+
+- **`repoIdentity`**  
+  *The identity of the repository used to determine the branch to start.*  
+  This is typically the name of the repository or a unique identifier.  
+  **Property:** `repoIdentity`
+  
+  _.e.g._ `${branchType}/${repoIdentiy}`
+
+---
+#### Branch End
+Merges a branch into development
+```bash
+mvn clean mutatio:branch-end -DbranchType=FEATUTE -DrepoIdentity="JIRA-123455"
+```
+#### ⚙️ Plugin Parameters
+- **`branchType`**  
+  *Type of branch*  
+  
+  **Property:** `branchType`
+  
+  _.e.g._ `${branchType}/${repoIdentiy}`
+
+|Branch Type|Description                                                                            |Example                    |
+|-----------|---------------------------------------------------------------------------------------|---------------------------|
+|ARCHIVE    |Archived or deprecated branches no longer in active development.                       |archive/${repoIdentity}    |
+|BUGFIX     |A branch used for fixing bugs, distinct from general fixes.                            |bugfix/${repoIdentity}     |
+|BUILD      |Branches related to build process changes or fixes.                                    |build/${repoIdentity}      |
+|CHORE      |Branches for chores like dependency updates, formatting, or maintenance.               |chore/${repoIdentity}      |
+|CI         |Branches related to continuous integration configuration.                              |ci/${repoIdentity}         |
+|CODE       |Branches used for general code organization or utilities.                              |code/${repoIdentity}       |
+|DOCS       |Branches containing documentation-related updates.                                     |docs/${repoIdentity}       |
+|EXPERIMENT |Branches for experimental or spike code that may be temporary.                         |experiment/${repoIdentity} |
+|FEATURE    |Branches implementing new features.                                                    |feat/${repoIdentity}       |
+|FIX        |General bug fixes not classified under bugfix or hotfix.                               |fix/${repoIdentity}        |
+|HOTFIX     |Urgent production fixes made directly on a release branch.                             |hotfix/${repoIdentity}     |
+|IMPROVEMENT|Branches for general improvements or minor enhancements.                               |improvement/${repoIdentity}|
+|PERF       |Branches targeting performance enhancements.                                           |perf/${repoIdentity}       |
+|PROTOTYPE  |Prototype branches for proofs of concept or throwaway work.                            |prototype/${repoIdentity}  |
+|REFACTOR   |Branches dedicated to refactoring existing code without adding features or fixing bugs.|refactor/${repoIdentity}   |
+|SANDBOX    |Safe space branches used for individual experimentation or testing.                    |sandbox/${repoIdentity}    |
+|STAGING    |Intermediate branches used for staging pre-production environments.                    |staging/${repoIdentity}    |
+|STYLE      |Branches related to code styling, formatting, or aesthetic cleanup.                    |style/${repoIdentity}      |
+|TEST       |Branches containing test cases or updates to test frameworks.                          |test/${repoIdentity}       |
+
+- **`repoIdentity`**  
+  *The identity of the repository used to determine the branch to start.*  
+  This is typically the name of the repository or a unique identifier.  
+  **Property:** `repoIdentity`
+  
+  _.e.g._ `${branchType}/${repoIdentiy}`
+
+---
+### Release
+#### 🧩 `ReleaseStart`
+
+**Description:**  
+This Mojo is used to start the release branch.  
+It is typically called at the beginning of the build process to initialize the release branch.
+
+🖥️  **Execute**
+```bash
+mvn clean mutatio:release-start -DreleaseType=MINOR
+```
+
+---
+
+### ⚙️ Parameters
+
+| Parameter           | Description                                                                                      | Property             | Default     | Required | Readonly |
+|---------------------|--------------------------------------------------------------------------------------------------|----------------------|-------------|----------|----------|
+| `project`           | The Maven project being built. Used to access project properties and configuration.             | `${project}`         | —           | —        | ✅        |
+| `settings`          | The settings for the Maven build, including repository configurations from `settings.xml`.      | `${settings}`        | —           | —        | ✅        |
+| `repoIdentity`      | The identity of the repository used to determine the branch to start. Typically a unique name.   | `repoIdentity`       | —           | —        | —        |
+| `releaseType`       | The type of release to be started. Typically `PATCH`, `MINOR`, or `MAJOR`.                      | `releaseType`        | `PATCH`     | ✅        | —        |
+| `versionIdentifier` | The version identifier to be used for the release. Typically `SNAPSHOT` or a specific version.   | `versionIdentifier`  | `SNAPSHOT`  | ❌        | —        |
+| `pushChanges`       | Flag to determine whether to push changes to the remote repository after starting the branch.    | `pushChanges`        | `true`      | —        | —        |
+
+----
+#### 🧩 `ReleaseEnd`
+**Description:**  
+This Mojo is used to end the release branch.  
+It is typically called at the end of the build process to finalize the release branch.
+
+🖥️  **execute**
+```bash
+mvn clean mutatio:release-end -Drelease=1.0.10
+```
+
+---
+
+### ⚙️ Parameters
+
+| Parameter       | Description                                                                                      | Property         | Default   | Required | Readonly |
+|----------------|--------------------------------------------------------------------------------------------------|------------------|-----------|----------|----------|
+| `project`       | The Maven project being built. Used to access project properties and configuration.             | `${project}`     | —         | —        | ✅        |
+| `settings`      | The settings for the Maven build, including repository configurations from `settings.xml`.      | `${settings}`    | —         | —        | ✅        |
+| `repoIdentity`  | The identity of the repository used to determine the branch to end. Typically a unique name.     | `repoIdentity`   | —         | —        | —        |
+| `release`       | The release version to be used when ending the release branch. Typically a version number.       | `release`        | —         | —        | —        |
+| `mainOrMaster`  | The type of branch to be used as the main or master branch after the release.                   | `mainOrMaster`   | `MASTER`  | —        | —        |
+| `pushChanges`   | Flag to determine whether to push changes to the remote repository after archiving.             | `pushChanges`    | `true`    | —        | —        |
+
+---
+
+### 🧩 `ReleaseNotesMojo`
+
+**Description:**  
+This mojo is used to create release notes from 2 release tags
+It can generate notes based on branch type, categorized changes, or standard release notes.
+
+🖥️  **execute**
+```bash
+mvn clean mutatio:release-notes -Drelease=1.0.10
+```
+
+---
+
+### ⚙️ Parameters
+
+| Parameter     | Description                                                                                      | Property     | Default | Required | Readonly |
+|---------------|--------------------------------------------------------------------------------------------------|--------------|---------|----------|----------|
+| `project`     | The Maven project being built. Used to access project properties and configuration.             | `${project}` | —       | —        | ✅        |
+| `settings`    | The settings for the Maven build, including repository configurations from `settings.xml`.      | `${settings}`| —       | —        | ✅        |
+| `notesType`   | Used to choose which kind of notes you want. See: `ReleaseNotesType`.                           | `notesType`  | —       | —        | —        |
+| `release`     | Used to determine which release tag you wish to create notes for.                               | `release`    | —       | —        | —        |
+
+---
+
+## 🧩 `ReleaseNotesType`
+
+**Description:**  
+Used to determine which kind of release notes are wanted.
+
+### Available values
+
+| Type      | Description                                                                 |
+|-----------|-----------------------------------------------------------------------------|
+| `STANDARD` | Standard release notes sorted by latest first.                             |
+| `CATEGORY` | Release notes sorted by latest first and by category.                      |
+| `BRANCH`   | Release notes sorted by latest first and by `BranchType`.   |
+
+---

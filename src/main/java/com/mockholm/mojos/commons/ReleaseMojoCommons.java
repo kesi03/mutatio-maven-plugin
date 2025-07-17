@@ -11,19 +11,17 @@ import com.mockholm.utils.CommitUtils;
 import com.mockholm.utils.GitUtils;
 import com.mockholm.utils.SemanticVersion;
 import org.apache.maven.plugin.MojoExecutionException;
-import org.eclipse.jgit.api.Git;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.File;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 
-public class ReleaseMojo {
+public class ReleaseMojoCommons {
     private final MojoCommons commons;
 
-    public ReleaseMojo(MojoCommons commons) {
+    public ReleaseMojoCommons(MojoCommons commons) {
         this.commons = commons;
     }
 
@@ -127,6 +125,7 @@ public class ReleaseMojo {
                     .runShellCommands(cmd -> {
                         List<String[]> properties = Arrays.asList(
                                 new String[] { "MUTATIO_NEXT_DEV_VERSION", nextDevelopmentVersion.toString() },
+                                new String[] { "MUTATIO_RELEASE_TAG", releaseTag },
                                 new String[] { "MUTATIO_NEXT_RELEASE_VERSION", nextVersion.toString() });
                         cmd.setBuildProperties(properties);
                     }, new ShellCommand(commons.getLog()))

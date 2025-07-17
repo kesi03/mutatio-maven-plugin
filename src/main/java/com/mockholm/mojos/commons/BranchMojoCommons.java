@@ -25,10 +25,10 @@ import java.util.concurrent.atomic.AtomicReference;
 /**
  * Common methods used when creating branches such as feat,chore,fix ect.
  */
-public class BranchMojo {
+public class BranchMojoCommons {
     private final MojoCommons commons;
 
-    public BranchMojo(MojoCommons commons) {
+    public BranchMojoCommons(MojoCommons commons) {
         this.commons = commons;
     }
 

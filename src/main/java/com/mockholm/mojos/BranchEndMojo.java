@@ -2,7 +2,7 @@ package com.mockholm.mojos;
 
 import com.mockholm.config.BranchType;
 import com.mockholm.models.MojoCommons;
-import com.mockholm.mojos.commons.BranchMojo;
+import com.mockholm.mojos.commons.BranchMojoCommons;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugins.annotations.LifecyclePhase;
 import org.apache.maven.plugins.annotations.Mojo;
@@ -32,6 +32,10 @@ public class BranchEndMojo extends AbstractMojo {
     @Parameter(property = "repoIdentity", name = "repoIdentity")
     private String repoIdentity;
 
+    /**
+     * A flag indicating whether to push changes to the remote repository after ending the branch.
+     * If set to true, the changes will be pushed; otherwise, they will not.
+     */
     @Parameter(property = "pushChanges", name ="pushChanges", defaultValue = "true")
     private boolean pushChanges;
 
@@ -50,7 +54,7 @@ public class BranchEndMojo extends AbstractMojo {
 
     public void execute() {
         getLog().info(String.format("Creating branch of %s",branchType));
-        new BranchMojo(new MojoCommons()
+        new BranchMojoCommons(new MojoCommons()
                 .withLog(getLog())
                 .withProject(project)
                 .withSettings(settings)

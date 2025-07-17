@@ -3,7 +3,7 @@ package com.mockholm.mojos;
 import com.mockholm.config.ReleaseType;
 import com.mockholm.config.VersionIdentifier;
 import com.mockholm.models.MojoCommons;
-import com.mockholm.mojos.commons.ReleaseMojo;
+import com.mockholm.mojos.commons.ReleaseMojoCommons;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugins.annotations.LifecyclePhase;
 import org.apache.maven.plugins.annotations.Mojo;
@@ -61,7 +61,7 @@ public class ReleaseStartMojo extends AbstractMojo {
     private boolean pushChanges;
 
     public void execute() {
-        new ReleaseMojo(new MojoCommons()
+        new ReleaseMojoCommons(new MojoCommons()
                 .withLog(getLog())
                 .withPushChanges(pushChanges)
                 .withRepoIdentity(repoIdentity)
