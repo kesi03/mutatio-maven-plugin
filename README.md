@@ -97,7 +97,7 @@ Then:
 ### 6. **Update settings**
 mutatio:update-settings
 ````bash
-mvn clean mutatio:update-settings -Did=github-ssh -DuserName=git -DprivateKey="/.ssh/id_ed25519" -Dpassphrase=BettnaBears1 -Daction=ADD
+mvn clean mutatio:update-settings -Did=github-ssh -DuserName=git -DprivateKey="/.ssh/id_ed25519" -Dpassphrase=FindMyKey -Daction=ADD
 ````
 ---
 ### 7. **Add a scm**
@@ -346,5 +346,34 @@ mvn clean mutatio:update-dependencies -Drelease=1.0.10
 | `release`         | The release version to be used when ending the release branch. Typically a version number.       | `release`        | —         | —        | —        |
 | `mainOrMaster`    | The type of branch to be used as the main or master branch after the release.                   | `mainOrMaster`   | `MASTER`  | —        | —        |
 | `artifacts`       | The artifacts to be updated. This is a comma-separated list of artifact identifiers.             | `artifacts`      | —         | ✅        | —        |
+
+---
+## Settings
+### 🧩 `UpdateSettingsMojo`
+
+**Description:**  
+This Mojo is used to update the Maven `settings.xml` file with server credentials.  
+It can add, update, or remove server entries based on the provided parameters.
+
+🖥️  **execute**
+```bash
+mvn clean mutatio:update-settings -Did=github-ssh -DuserName=git -DprivateKey="/.ssh/id_ed25519" -Dpassphrase=FindMyKey -Daction=ADD
+```
+
+
+---
+
+#### ⚙️ Parameters
+
+| Parameter     | Description                                                                                          | Property     | Default | Required | Readonly |
+|---------------|------------------------------------------------------------------------------------------------------|--------------|---------|----------|----------|
+| `project`     | The Maven project being built. Used to access project properties and configuration.                 | `${project}` | —       | ✅        | ✅        |
+| `settings`    | The settings for the Maven build, including repository configurations from `settings.xml`.          | `${settings}`| —       | ✅        | ✅        |
+| `id`          | The ID of the server to be added, updated, or removed. Typically the name defined in `settings.xml`. | `id`         | —       | —        | —        |
+| `password`    | The password for the server. Used for authentication.                                                | `password`   | —       | —        | —        |
+| `privateKey`  | The private key used for SSH authentication.                                                         | `privateKey` | —       | —        | —        |
+| `passphrase`  | The SSH key passphrase used for authentication.                                                     | `passphrase` | —       | —        | —        |
+| `userName`    | The username for the server. Used for authentication.                                                | `userName`   | —       | —        | —        |
+| `action`      | The action to perform on the server entry: `READ`, `ADD`, `UPDATE`, or `REMOVE`.                    | `action`     | `READ`  | —        | —        |
 
 ---
