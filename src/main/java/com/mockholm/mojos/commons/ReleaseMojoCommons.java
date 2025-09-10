@@ -35,7 +35,9 @@ public class ReleaseMojoCommons {
 
         SemanticVersion nextVersion = getNextVersion(currentVersion, releaseType);
 
-        commons.getLog().info("Release Branch: " + nextVersion.toString());
+        SemanticVersion releaseVersion = getReleaseVersion(currentVersion);
+
+        commons.getLog().info("Release Branch: " + releaseVersion.toString());
 
         SemanticVersion nextDevelopmentVersion = getNextVersion(currentVersion, releaseType,
                 VersionIdentifier.SNAPSHOT.getValue(), "");
@@ -53,8 +55,8 @@ public class ReleaseMojoCommons {
 
             PomCommand pomCommand = new PomCommand(baseDir, commons.getLog());
 
-            String releaseBranch = BranchType.RELEASE.getValue() + "/" + nextVersion.toString();
-            String releaseTag = BranchType.RELEASE.getValue() + "-" + nextVersion.toString();
+            String releaseBranch = BranchType.RELEASE.getValue() + "/" + releaseVersion.toString();
+            String releaseTag = BranchType.RELEASE.getValue() + "-" + releaseVersion.toString();
 
             new GitCommand(commons.getLog())
                     .changeBranch(BranchType.DEVELOPMENT.getValue(), gitConfiguration)
@@ -63,13 +65,13 @@ public class ReleaseMojoCommons {
                     .runPomCommands(cmd -> {
                         try {
                             pomCommand
-                                    .setVersion(nextVersion.toString())
+                                    .setVersion(releaseVersion.toString())
                                     .updatePomVersion()
                                     .updateModules();
 
                             CommitDescription description = new CommitDescription.Builder()
                                     .action(BranchAction.START)
-                                    .branchName(nextVersion.toString())
+                                    .branchName(releaseVersion.toString())
                                     .message("branch...")
                                     .build();
 
@@ -135,6 +137,13 @@ public class ReleaseMojoCommons {
             throw new RuntimeException(e);
         }
 
+    }
+
+    public SemanticVersion getReleaseVersion(SemanticVersion currentVersion) {
+        int major = currentVersion.getMajor();
+        int minor = currentVersion.getMinor();
+        int patch = currentVersion.getPatch();
+        return SemanticVersion.of(major, minor, patch);
     }
 
     public SemanticVersion getNextVersion(SemanticVersion currentVersion, ReleaseType releaseType) {
