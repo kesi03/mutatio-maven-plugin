@@ -143,7 +143,10 @@ public class ReleaseMojoCommons {
         int major = currentVersion.getMajor();
         int minor = currentVersion.getMinor();
         int patch = currentVersion.getPatch();
-        return SemanticVersion.of(major, minor, patch);
+        return new SemanticVersion(
+                major,
+                minor,
+                patch);
     }
 
     public SemanticVersion getNextVersion(SemanticVersion currentVersion, ReleaseType releaseType) {
