@@ -25,6 +25,25 @@ public class ReleaseMojoCommons {
         this.commons = commons;
     }
 
+    public void version(@NotNull ReleaseType releaseType, VersionIdentifier versionIdentifier) {
+        commons.getLog().info("Current Branch Name: " + GitUtils.getCurrentBranch());
+        commons.getLog().info("Current version: " + commons.getProject().getVersion());
+
+        SemanticVersion currentVersion = SemanticVersion.parse(commons.getProject().getVersion());
+
+        commons.getLog().info("Current Branch Version: " + currentVersion.toString());
+
+        SemanticVersion nextVersion = getNextVersion(currentVersion, releaseType);
+
+        new ShellCommand(commons.getLog()).runShellCommands(cmd -> {
+            LList<String[]> properties = Arrays.asList(
+                                new String[] { "MUTATIO_DEV_VERSION", nextDevelopmentVersion.toString() },
+                                new String[] { "MUTATIO_RELEASE_TAG", releaseTag },
+                                new String[] { "MUTATIO_RELEASE_VERSION", currentVersion.toString() });
+            cmd.setBuildProperties(properties);
+        });
+    }
+
     public void executeStart(@NotNull ReleaseType releaseType, VersionIdentifier versionIdentifier) {
         commons.getLog().info("Current Branch Name: " + GitUtils.getCurrentBranch());
         commons.getLog().info("Current version: " + commons.getProject().getVersion());
@@ -128,7 +147,7 @@ public class ReleaseMojoCommons {
                         List<String[]> properties = Arrays.asList(
                                 new String[] { "MUTATIO_NEXT_DEV_VERSION", nextDevelopmentVersion.toString() },
                                 new String[] { "MUTATIO_RELEASE_TAG", releaseTag },
-                                new String[] { "MUTATIO_NEXT_RELEASE_VERSION", nextVersion.toString() });
+                                new String[] { "MUTATIO_NEXT_RELEASE_VERSION", releaseVersion.toString() });
                         cmd.setBuildProperties(properties);
                     }, new ShellCommand(commons.getLog()))
                     .close();
