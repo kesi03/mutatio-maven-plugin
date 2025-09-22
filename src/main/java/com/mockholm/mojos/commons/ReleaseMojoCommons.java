@@ -35,13 +35,21 @@ public class ReleaseMojoCommons {
 
         SemanticVersion nextVersion = getNextVersion(currentVersion, releaseType);
 
-        new ShellCommand(commons.getLog()).runShellCommands(cmd -> {
-            LList<String[]> properties = Arrays.asList(
-                                new String[] { "MUTATIO_DEV_VERSION", nextDevelopmentVersion.toString() },
-                                new String[] { "MUTATIO_RELEASE_TAG", releaseTag },
-                                new String[] { "MUTATIO_RELEASE_VERSION", currentVersion.toString() });
-            cmd.setBuildProperties(properties);
-        });
+        commons.getLog().info("Next Version: " + nextVersion.toString());
+
+        SemanticVersion nextDevelopmentVersion = getNextVersion(currentVersion, releaseType,
+                VersionIdentifier.SNAPSHOT.getValue(), "");
+
+        commons.getLog().info("Next Development Version: " + nextDevelopmentVersion.toString());
+
+        String releaseTag = BranchType.RELEASE.getValue() + "-" + currentVersion.toString();
+
+        ShellCommand cmd=new ShellCommand(commons.getLog());
+        List<String[]> properties = Arrays.asList(
+                new String[] { "MUTATIO_CURRENT_VERSION", currentVersion.toString() },
+                new String[] { "MUTATIO_CURRENT_DEV_VERSION", nextDevelopmentVersion.toString() },
+                new String[] { "MUTATIO_CURRENT_RELEASE_TAG", releaseTag });
+        cmd.setBuildProperties(properties);
     }
 
     public void executeStart(@NotNull ReleaseType releaseType, VersionIdentifier versionIdentifier) {
