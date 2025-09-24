@@ -82,11 +82,11 @@ public class ReleaseMojoCommons {
 
             PomCommand pomCommand = new PomCommand(baseDir, commons.getLog());
 
-            String releaseBranch = BranchType.RELEASE.getValue() + "/" + releaseVersion.toString();
-            String releaseTag = BranchType.RELEASE.getValue() + "-" + releaseVersion.toString();
+            String releaseBranch = commons.getReleaseBranch() + "/" + releaseVersion.toString();
+            String releaseTag = commons.getReleaseBranch() + "-" + releaseVersion.toString();
 
             new GitCommand(commons.getLog())
-                    .changeBranch(BranchType.DEVELOPMENT.getValue(), gitConfiguration)
+                    .changeBranch(commons.getDevBranch(), gitConfiguration)
                     .changeBranch(releaseBranch, gitConfiguration)
                     .gitInfo()
                     .runPomCommands(cmd -> {
@@ -119,7 +119,7 @@ public class ReleaseMojoCommons {
                     .addAllChanges()
                     .commit(commitMessage.get())
                     .push(gitConfiguration)
-                    .changeBranch(BranchType.DEVELOPMENT.getValue(), gitConfiguration)
+                    .changeBranch(commons.getDevBranch(), gitConfiguration)
                     .runPomCommands(cmd -> {
                         try {
                             pomCommand
@@ -129,7 +129,7 @@ public class ReleaseMojoCommons {
 
                             CommitDescription description = new CommitDescription.Builder()
                                     .action(BranchAction.START)
-                                    .branchName(BranchType.DEVELOPMENT.getValue())
+                                    .branchName(commons.getDevBranch())
                                     .message("branch...")
                                     .build();
 

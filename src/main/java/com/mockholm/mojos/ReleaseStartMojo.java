@@ -60,11 +60,27 @@ public class ReleaseStartMojo extends AbstractMojo {
     @Parameter(property = "pushChanges", name ="pushChanges", defaultValue = "true")
     private boolean pushChanges;
 
+    /**
+     * The name of the branch to be released.
+     * Default is "develop".
+     */
+    @Parameter(property = "devBranch", name ="devBranch", defaultValue = "develop")
+    private String devBranch;
+
+    /**
+     * The name of the release branch to be created.
+     * Default is "release".
+     */
+    @Parameter(property = "releaseBranch", name ="releaseBranch", defaultValue = "release")
+    private String releaseBranch;
+
     public void execute() {
         new ReleaseMojoCommons(new MojoCommons()
                 .withLog(getLog())
                 .withPushChanges(pushChanges)
                 .withRepoIdentity(repoIdentity)
+                .withDevBranch(devBranch)
+                .withReleaseBranch(releaseBranch)
                 .withProject(project)
                 .withSettings(settings))
                 .executeStart(releaseType,versionIdentifier);

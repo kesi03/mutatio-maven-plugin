@@ -39,6 +39,12 @@ public class MojoCommons {
     /** Flag indicating whether SCM changes should be pushed automatically. */
     private boolean pushChanges;
 
+    /** The name of the branch to be released. */
+    private String devBranch;
+
+    /** The name of the release branch to be created. */
+    private String releaseBranch;
+
     /**
      * Gets the Maven logger.
      *
@@ -269,6 +275,64 @@ public class MojoCommons {
      */
     public ProjectBuilder getProjectBuilder() {
         return projectBuilder;
+    }
+
+    /**
+     * Gets the name of the branch to be released.
+     *
+     * @return the branch name
+     */    
+    public String getDevBranch() {
+        return devBranch;  
+    }
+
+    /**
+     * Sets the name of the branch to be released and returns the updated instance.
+     *
+     * @param devBranch the branch name
+     * @return the updated MojoCommons object
+     */
+    public MojoCommons withDevBranch(String devBranch) {
+        this.devBranch = devBranch;
+        return this;
+    }
+
+    /**
+     * Sets the name of the branch to be released.
+     *
+     * @param devBranch the branch name
+     */
+    public void setDevBranch(String devBranch) {
+        this.devBranch = devBranch;
+    }
+
+    /**
+     * Gets the name of the release branch to be created.
+     *
+     * @return the release branch name
+     */    
+    public String getReleaseBranch() {
+        return releaseBranch;
+    }
+
+    /**
+     * Sets the name of the release branch to be created and returns the updated instance.
+     *
+     * @param releaseBranch the release branch name
+     * @return the updated MojoCommons object
+     */
+    public MojoCommons withReleaseBranch(String releaseBranch) {
+        this.releaseBranch = releaseBranch;
+        return this;
+    }
+
+    /**
+     * Sets the name of the release branch to be created.
+     *
+     * @param releaseBranch the release branch name
+     */
+    public void setReleaseBranch(String releaseBranch) {
+        this.releaseBranch = releaseBranch;
     }
     
 }
