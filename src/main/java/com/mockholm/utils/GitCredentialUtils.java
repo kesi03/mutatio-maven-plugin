@@ -207,10 +207,8 @@ public class GitCredentialUtils {
             if (slashIndex == -1) {
                 throw new IllegalArgumentException("Malformed Git URL: " + httpsUrl);
             }
-
             String host = stripped.substring(0, slashIndex);
             String path = stripped.substring(slashIndex + 1);
-
             return "git@" + host + ":" + path;
         }
     }
