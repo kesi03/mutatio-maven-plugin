@@ -70,7 +70,12 @@ public class CollateArtifactsMojo extends AbstractMojo{
     @Parameter(property = "mainOrMaster", name="mainOrMaster", defaultValue = "MASTER")
     private BranchType mainOrMaster;
 
-    
+    /**
+     * The name of the release branch to be created.
+     * Default is "release".
+     */
+    @Parameter(property = "releaseBranch", name ="releaseBranch", defaultValue = "release")
+    private String releaseBranch;
 
     /**
      * Executes the Mojo to start the dependency branch creation process.
@@ -91,6 +96,7 @@ public class CollateArtifactsMojo extends AbstractMojo{
                 .withSession(session)
                 .withSettings(settings)
                 .withProjectBuilder(projectBuilder)
+                .withReleaseBranch(releaseBranch)
                 .withRepoIdentity(repoIdentity);
 
         // Create an instance of DependencyMojo to handle the logic
