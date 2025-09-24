@@ -241,6 +241,7 @@ public class GitCredentialUtils {
         String remoteUrl = git.getRepository()
                 .getConfig()
                 .getString("remote", "origin", "url");
+        System.out.println("My Remote URL: " + remoteUrl);
         return convertHttpsToSsh(remoteUrl);
     }
 
