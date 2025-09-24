@@ -69,9 +69,9 @@ public class DependencyMojoCommons {
 
         commons.getLog().info("Release version: " + releaseVersion.toString());
 
-        String releaseBranch = "release/" + releaseVersion.toString();
+        String releaseBranch = commons.getReleaseBranch()+"/" + releaseVersion.toString();
 
-        String releaseTag = "release-" + releaseVersion.toString();
+        String releaseTag = commons.getReleaseBranch()+"-" + releaseVersion.toString();
 
         String baseDir = commons.getProject().getBasedir().getAbsolutePath();
 
