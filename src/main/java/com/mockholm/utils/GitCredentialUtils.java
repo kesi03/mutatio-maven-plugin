@@ -31,7 +31,8 @@ import java.util.List;
 import java.util.function.BiFunction;
 
 /**
- * Utility class for handling Git authentication and repository connection details.
+ * Utility class for handling Git authentication and repository connection
+ * details.
  * Supports both SSH and HTTPS configurations, derived from Maven SCM metadata.
  */
 public class GitCredentialUtils {
@@ -44,9 +45,10 @@ public class GitCredentialUtils {
      *
      * @param scm the Maven SCM object containing the connection string
      * @return the raw Git repository URL
-     * @throws IllegalArgumentException if the SCM connection is null or improperly formatted
+     * @throws IllegalArgumentException if the SCM connection is null or improperly
+     *                                  formatted
      */
-    public static String getGitUrl(Scm scm){
+    public static String getGitUrl(Scm scm) {
         if (scm == null || !scm.getConnection().startsWith("scm:git:")) {
             throw new IllegalArgumentException("Invalid SCM format: " + scm);
         }
@@ -60,9 +62,10 @@ public class GitCredentialUtils {
      *
      * @param scm the Maven SCM object containing the connection string
      * @return {@code true} if the URL uses SSH; {@code false} otherwise
-     * @throws IllegalArgumentException if the SCM connection is null or improperly formatted
+     * @throws IllegalArgumentException if the SCM connection is null or improperly
+     *                                  formatted
      */
-    public static boolean isSSH(Scm scm){
+    public static boolean isSSH(Scm scm) {
         if (scm == null || !scm.getConnection().startsWith("scm:git:")) {
             throw new IllegalArgumentException("Invalid SCM format: " + scm);
         }
@@ -73,13 +76,14 @@ public class GitCredentialUtils {
     }
 
     /**
-     * Creates a JGit {@link TransportConfigCallback} that configures the Git transport
+     * Creates a JGit {@link TransportConfigCallback} that configures the Git
+     * transport
      * layer to use SSH authentication with the specified private key.
      *
      * @param sshKeyPath the file path to the private SSH key to use
      * @return the configured TransportConfigCallback for use with JGit operations
      */
-    public static TransportConfigCallback getSSHCallBack(String sshKeyPath){
+    public static TransportConfigCallback getSSHCallBack(String sshKeyPath) {
         return transport -> {
             if (transport instanceof SshTransport) {
                 ((SshTransport) transport).setSshSessionFactory(createSshSessionFactory(sshKeyPath));
@@ -89,15 +93,17 @@ public class GitCredentialUtils {
             }
         };
 
-
     }
 
     /**
-     * Creates a JGit {@link TransportConfigCallback} that configures the Git transport
-     * layer to use SSH authentication with the specified private key and optional passphrase.
+     * Creates a JGit {@link TransportConfigCallback} that configures the Git
+     * transport
+     * layer to use SSH authentication with the specified private key and optional
+     * passphrase.
      *
      * @param sshKeyPath the file path to the private SSH key to use
-     * @param passphrase the passphrase for the private key, or {@code null} if the key is unencrypted
+     * @param passphrase the passphrase for the private key, or {@code null} if the
+     *                   key is unencrypted
      * @return the configured TransportConfigCallback for use with JGit operations
      */
     public static TransportConfigCallback getSSHCallBack(String sshKeyPath, String passphrase) {
@@ -111,19 +117,22 @@ public class GitCredentialUtils {
     }
 
     /**
-     * Creates a {@link UsernamePasswordCredentialsProvider} using a personal access token
+     * Creates a {@link UsernamePasswordCredentialsProvider} using a personal access
+     * token
      * for Git operations over HTTPS.
      *
      * @param token the personal access token (PAT) to use for authentication
      * @return a credentials provider configured with the token
      */
-    public static UsernamePasswordCredentialsProvider getUserProvider(String token){
+    public static UsernamePasswordCredentialsProvider getUserProvider(String token) {
         return new UsernamePasswordCredentialsProvider(token, "");
     }
 
     /**
-     * Creates a custom {@link JschConfigSessionFactory} that disables strict host key checking
-     * and loads an identity file from the given path. Used internally to support SSH transport.
+     * Creates a custom {@link JschConfigSessionFactory} that disables strict host
+     * key checking
+     * and loads an identity file from the given path. Used internally to support
+     * SSH transport.
      *
      * @param sshKeyPath the file path to the SSH private key
      * @return a configured session factory for use with SSH Git operations
@@ -146,12 +155,14 @@ public class GitCredentialUtils {
     }
 
     /**
-     * Creates a custom {@link JschConfigSessionFactory} that disables strict host key checking
+     * Creates a custom {@link JschConfigSessionFactory} that disables strict host
+     * key checking
      * and loads an identity file from the given path using an optional passphrase.
      * Used internally to support SSH transport.
      *
      * @param sshKeyPath the file path to the SSH private key
-     * @param passphrase the passphrase for the private key, or {@code null} if unencrypted
+     * @param passphrase the passphrase for the private key, or {@code null} if
+     *                   unencrypted
      * @return a configured session factory for use with SSH Git operations
      */
     private static JschConfigSessionFactory createSshSessionFactory(String sshKeyPath, String passphrase) {
@@ -179,34 +190,37 @@ public class GitCredentialUtils {
      * Converts a Git repository URL from HTTPS format to SSH format.
      * <p>
      * For example, converts:
-     * {@code https://github.com/user/repo.git} to {@code git@github.com:user/repo.git}
+     * {@code https://github.com/user/repo.git} to
+     * {@code git@github.com:user/repo.git}
      *
      * @param httpsUrl the HTTPS Git URL to convert
      * @return the equivalent SSH Git URL
-     * @throws IllegalArgumentException if the input is null, not HTTPS, or malformed
+     * @throws IllegalArgumentException if the input is null, not HTTPS, or
+     *                                  malformed
      */
     public static String convertHttpsToSsh(String httpsUrl) {
         if (httpsUrl == null || !httpsUrl.startsWith("https://")) {
-            throw new IllegalArgumentException("Invalid HTTPS Git URL: " + httpsUrl);
+            return httpsUrl;
+        } else {
+            String stripped = httpsUrl.substring("https://".length());
+            int slashIndex = stripped.indexOf('/');
+            if (slashIndex == -1) {
+                throw new IllegalArgumentException("Malformed Git URL: " + httpsUrl);
+            }
+
+            String host = stripped.substring(0, slashIndex);
+            String path = stripped.substring(slashIndex + 1);
+
+            return "git@" + host + ":" + path;
         }
-
-        String stripped = httpsUrl.substring("https://".length());
-        int slashIndex = stripped.indexOf('/');
-        if (slashIndex == -1) {
-            throw new IllegalArgumentException("Malformed Git URL: " + httpsUrl);
-        }
-
-        String host = stripped.substring(0, slashIndex);
-        String path = stripped.substring(slashIndex + 1);
-
-        return "git@" + host + ":" + path;
     }
 
     /**
      * Converts a Git repository URL from SSH format to HTTPS format.
      * <p>
      * For example, converts:
-     * {@code git@github.com:user/repo.git} to {@code https://github.com/user/repo.git}
+     * {@code git@github.com:user/repo.git} to
+     * {@code https://github.com/user/repo.git}
      *
      * @param sshUrl the SSH Git URL to convert
      * @return the equivalent HTTPS Git URL
@@ -231,7 +245,8 @@ public class GitCredentialUtils {
     }
 
     /**
-     * Converts the 'origin' remote URL from HTTPS to SSH format using the Git config.
+     * Converts the 'origin' remote URL from HTTPS to SSH format using the Git
+     * config.
      *
      * @param git the Git instance
      * @return the SSH-formatted URL
@@ -246,7 +261,8 @@ public class GitCredentialUtils {
     }
 
     /**
-     * Converts the 'origin' remote URL from SSH to HTTPS format using the Git config.
+     * Converts the 'origin' remote URL from SSH to HTTPS format using the Git
+     * config.
      *
      * @param git the Git instance
      * @return the HTTPS-formatted URL
@@ -264,7 +280,7 @@ public class GitCredentialUtils {
      * <p>
      * Equivalent to running {@code git config --get remote.origin.url}.
      *
-     * @param git the Git instance
+     * @param git        the Git instance
      * @param remoteName the name of the remote (e.g., "origin")
      * @return the remote URL, or {@code null} if not found
      */
@@ -284,14 +300,13 @@ public class GitCredentialUtils {
         return getRemoteUrl(git, "origin");
     }
 
-
     /**
      * Adds a new SSH remote to the given Git repository using the SSH URL
      * converted from the existing HTTPS origin.
      *
      * @param git the Git repository instance
      * @throws URISyntaxException if the SSH URI is malformed
-     * @throws GitAPIException if the remote addition fails
+     * @throws GitAPIException    if the remote addition fails
      */
     public static void addSSHRemote(Git git) throws URISyntaxException, GitAPIException {
         String origin = GitCredentialUtils.convertOriginHttpsToSsh(git);
@@ -301,9 +316,9 @@ public class GitCredentialUtils {
         remoteAddCommand.call();
     }
 
-
     /**
-     * Retrieves the configured server credentials from the provided Git configuration.
+     * Retrieves the configured server credentials from the provided Git
+     * configuration.
      *
      * @param configuration the Git configuration containing settings and server key
      * @return the Server configuration for the given key
@@ -312,12 +327,11 @@ public class GitCredentialUtils {
         return configuration.getSettings().getServer(configuration.getServerKey());
     }
 
-
     /**
      * Retrieves the configured server credentials from Maven settings.
      *
      * @param serverKey the ID of the server in settings.xml
-     * @param settings the Maven settings object
+     * @param settings  the Maven settings object
      * @return the Server configuration for the given key
      */
     public static Server getServer(String serverKey, Settings settings) {
@@ -325,7 +339,8 @@ public class GitCredentialUtils {
     }
 
     /**
-     * Builds an SshdSessionFactory using the server credentials from the provided Git configuration.
+     * Builds an SshdSessionFactory using the server credentials from the provided
+     * Git configuration.
      *
      * @param configuration the Git configuration containing settings and server key
      * @return a configured SshdSessionFactory instance
@@ -342,12 +357,12 @@ public class GitCredentialUtils {
         return getSshdSessionFactory(getServer(configuration));
     }
 
-
     /**
-     * Builds an SshdSessionFactory using the server credentials identified by the given key.
+     * Builds an SshdSessionFactory using the server credentials identified by the
+     * given key.
      *
      * @param serverKey the ID of the server in settings.xml
-     * @param settings the Maven settings object
+     * @param settings  the Maven settings object
      * @return a configured SshdSessionFactory instance
      */
     public static SshdSessionFactory getSshdSessionFactory(String serverKey, Settings settings) {
@@ -360,7 +375,7 @@ public class GitCredentialUtils {
 
     /**
      * Gets a default SshdSessionFactory
-     /**
+     * /**
      * Gets a default SshdSessionFactory with relaxed host key checking
      *
      * @return a configured SshdSessionFactory instance
@@ -378,10 +393,10 @@ public class GitCredentialUtils {
             }
 
             @Override
-            public boolean accept(String s, InetSocketAddress inetSocketAddress, PublicKey publicKey, Configuration configuration, CredentialsProvider credentialsProvider) {
+            public boolean accept(String s, InetSocketAddress inetSocketAddress, PublicKey publicKey,
+                    Configuration configuration, CredentialsProvider credentialsProvider) {
                 return true;
             }
-
 
         };
 
