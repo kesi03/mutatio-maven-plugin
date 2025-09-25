@@ -128,7 +128,7 @@ public class UpdateDependenciesMojo extends AbstractMojo {
         try {
             String branchName = (CollateType.valueOf(collateType) == CollateType.RELEASE)
                     ? dependencyMojo.getReleaseBranch(release)
-                    : dependencyMojo.getDevBranch();
+                    : releaseBranch;
             getLog().info("Branch: " + branchName);
             // Call the method to update dependencies
            dependencyMojo.updateDependencies(branchName,artifacts, CollateType.valueOf(collateType));

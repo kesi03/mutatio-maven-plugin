@@ -99,6 +99,7 @@ public class CollateArtifactsMojo extends AbstractMojo{
         getLog().info("Starting dependency collation...");
         getLog().info("Release branch: " + releaseBranch);
         getLog().info("Release version: " + release);
+        getLog().info("Collate type: " + collateType);
         getLog().info("Main or Master branch: " + mainOrMaster);
         getLog().info("------------------------------------");
 
@@ -119,7 +120,7 @@ public class CollateArtifactsMojo extends AbstractMojo{
             
             String branchName = (CollateType.valueOf(collateType) == CollateType.RELEASE)
                     ? dependencyMojo.getReleaseBranch(release)
-                    : dependencyMojo.getDevBranch();
+                    : releaseBranch;
             
             getLog().info("Branch: " + branchName);
             // Start the dependency process with the provided parameters
