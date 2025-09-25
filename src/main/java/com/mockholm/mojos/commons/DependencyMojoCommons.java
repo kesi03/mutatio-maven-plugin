@@ -140,7 +140,7 @@ public class DependencyMojoCommons {
                 "updateDependencies called with release: " + release + ", mainOrMaster: " + mainOrMaster.getValue());
 
         SemanticVersion releaseVersion = SemanticVersion.parse(release);
-        String releaseBranch = "release/" + releaseVersion.toString();
+        String releaseBranch = commons.getReleaseBranch()+"/" + releaseVersion.toString();
 
         commons.getLog().info("Switching to branch: " + releaseBranch);
         GitConfiguration gitConfiguration = new GitConfiguration()

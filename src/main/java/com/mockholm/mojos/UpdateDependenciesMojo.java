@@ -81,6 +81,13 @@ public class UpdateDependenciesMojo extends AbstractMojo {
     @Parameter(property = "artifacts", name="artifacts", required = true)
     private String artifacts;
 
+    /**
+     * The name of the release branch to be created.
+     * Default is "release".
+     */
+    @Parameter(property = "releaseBranch", name ="releaseBranch", defaultValue = "release")
+    private String releaseBranch;
+
 
     @Override
     public void execute() throws MojoExecutionException, MojoFailureException {
@@ -93,6 +100,7 @@ public class UpdateDependenciesMojo extends AbstractMojo {
                 .withSession(session)
                 .withSettings(settings)
                 .withProjectBuilder(projectBuilder)
+                .withReleaseBranch(releaseBranch)
                 .withRepoIdentity(repoIdentity);
 
         // Create an instance of DependencyMojo to handle dependency updates
