@@ -106,7 +106,7 @@ public class UpdateDependenciesMojo extends AbstractMojo {
         getLog().info("Collate type: " + collateType);
         getLog().info("Repo identity: " + repoIdentity);
         getLog().info("Artifacts: ");
-        for (String artifact : artifacts.split(",")) {
+        for (String artifact : artifacts.split(";")) {
             getLog().info(" - " + artifact.trim());
         }
         
