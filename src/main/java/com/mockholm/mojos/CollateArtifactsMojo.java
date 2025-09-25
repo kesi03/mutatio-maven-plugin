@@ -116,7 +116,11 @@ public class CollateArtifactsMojo extends AbstractMojo{
         DependencyMojoCommons dependencyMojo = new DependencyMojoCommons(commons);
 
         try {
-            String branchName = dependencyMojo.getReleaseBranch(release);
+            
+            String branchName = (CollateType.valueOf(collateType) == CollateType.RELEASE)
+                    ? dependencyMojo.getReleaseBranch(release)
+                    : dependencyMojo.getDevBranch();
+            
             getLog().info("Branch: " + branchName);
             // Start the dependency process with the provided parameters
             dependencyMojo.collateArtifacts(branchName, CollateType.valueOf(collateType));
