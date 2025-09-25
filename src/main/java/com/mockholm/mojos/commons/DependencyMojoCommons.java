@@ -65,7 +65,7 @@ public class DependencyMojoCommons {
      * @return the development branch name
      */
     public String getDevBranch(){
-        return commons.getDevelopmentBranch();
+        return commons.getDevBranch();
     }
 
     /**
@@ -73,7 +73,7 @@ public class DependencyMojoCommons {
      *
      * @param branch2Collate the release branch to collate artifacts from
      */
-    public void collateArtifacts(String branch2Collate, CollateType collateType) {
+    public void collateArtifacts(String branch2Collate, CollateType collateType) throws IOException {
         GitConfiguration gitConfiguration = new GitConfiguration()
                 .withServerKey(commons.getProject().getProperties().getProperty("gitProvider"))
                 .withScm(commons.getProject().getScm())
@@ -88,7 +88,7 @@ public class DependencyMojoCommons {
                         buildingRequest.setResolveDependencies(true);
 
                         MavenProject rootProject = commons.getProjectBuilder()
-                                .build(new File(baseDir, "pom.xml"), buildingRequest)
+                                .build(new File(commons.getProject().getBasedir().getAbsolutePath(), "pom.xml"), buildingRequest)
                                 .getProject();
 
                         Set<String> artifactNames = new LinkedHashSet<>();
@@ -198,7 +198,7 @@ public class DependencyMojoCommons {
 
     }
 
-    public void updateDependencies(String branch2Update, String artifacts, CollateType collateType) {
+    public void updateDependencies(String branch2Update, String artifacts, CollateType collateType) throws IOException {
         GitConfiguration gitConfiguration = new GitConfiguration()
                 .withServerKey(commons.getProject().getProperties().getProperty("gitProvider"))
                 .withScm(commons.getProject().getScm())

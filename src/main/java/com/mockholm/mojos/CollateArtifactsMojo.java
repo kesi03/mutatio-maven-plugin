@@ -116,10 +116,10 @@ public class CollateArtifactsMojo extends AbstractMojo{
         DependencyMojoCommons dependencyMojo = new DependencyMojoCommons(commons);
 
         try {
-            String branchName = dependencyMojo.getReleaseBranchName(releaseBranch);
+            String branchName = dependencyMojo.getReleaseBranch(release);
             getLog().info("Branch: " + branchName);
             // Start the dependency process with the provided parameters
-            dependencyMojo.collateArtifacts(branchName, CollateType(collateType));
+            dependencyMojo.collateArtifacts(branchName, CollateType.valueOf(collateType));
         } catch (Exception e) {
             throw new MojoExecutionException("Error starting dependency branch", e);
         }
