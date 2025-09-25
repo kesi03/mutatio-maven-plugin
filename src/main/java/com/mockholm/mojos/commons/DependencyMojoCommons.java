@@ -34,8 +34,10 @@ import com.mockholm.utils.GitUtils;
 import com.mockholm.utils.SemanticVersion;
 
 /**
- * This class provides common functionality for handling dependencies in Maven projects.
- * It includes methods to collate artifacts and update dependencies based on a release version.
+ * This class provides common functionality for handling dependencies in Maven
+ * projects.
+ * It includes methods to collate artifacts and update dependencies based on a
+ * release version.
  */
 public class DependencyMojoCommons {
     private final MojoCommons commons;
@@ -43,20 +45,20 @@ public class DependencyMojoCommons {
     /**
      * Constructs a DependencyMojoCommons instance with the provided MojoCommons.
      *
-     * @param commons the MojoCommons instance containing project and settings information
+     * @param commons the MojoCommons instance containing project and settings
+     *                information
      */
     public DependencyMojoCommons(MojoCommons commons) {
         this.commons = commons;
     }
-
 
     /**
      * Returns the name of the release branch.
      *
      * @return the release branch name
      */
-    public String getReleaseBranch(String release){
-       return commons.getReleaseBranch()+"/"+release;
+    public String getReleaseBranch(String release) {
+        return commons.getReleaseBranch() + "/" + release;
     }
 
     /**
@@ -64,7 +66,7 @@ public class DependencyMojoCommons {
      *
      * @return the development branch name
      */
-    public String getDevBranch(){
+    public String getDevBranch() {
         return commons.getDevBranch();
     }
 
@@ -88,7 +90,8 @@ public class DependencyMojoCommons {
                         buildingRequest.setResolveDependencies(true);
 
                         MavenProject rootProject = commons.getProjectBuilder()
-                                .build(new File(commons.getProject().getBasedir().getAbsolutePath(), "pom.xml"), buildingRequest)
+                                .build(new File(commons.getProject().getBasedir().getAbsolutePath(), "pom.xml"),
+                                        buildingRequest)
                                 .getProject();
 
                         Set<String> artifactNames = new LinkedHashSet<>();
@@ -104,8 +107,10 @@ public class DependencyMojoCommons {
                         String artifactsString = String.join(";", artifactNames);
 
                         List<String[]> properties = Arrays.asList(
-                                new String[] { "MUTATIO_"+collateType.toString().toUpperCase()+"_BRANCH", branch2Collate },
-                                new String[] { "MUTATIO_"+collateType.toString().toUpperCase()+"_ARTIFACTS", artifactsString });
+                                new String[] { "MUTATIO_" + collateType.toString().toUpperCase() + "_BRANCH",
+                                        branch2Collate },
+                                new String[] { "MUTATIO_" + collateType.toString().toUpperCase() + "_ARTIFACTS",
+                                        artifactsString });
                         cmd.setBuildProperties(properties);
 
                     } catch (ProjectBuildingException e) {
@@ -123,8 +128,9 @@ public class DependencyMojoCommons {
     /**
      * Collates artifacts for a given release version and branch type.
      *
-     * @param release        the release version to collate artifacts for
-     * @param mainOrMaster   the branch type (main or master) to collate artifacts from
+     * @param release      the release version to collate artifacts for
+     * @param mainOrMaster the branch type (main or master) to collate artifacts
+     *                     from
      * @throws IOException if an I/O error occurs while reading or writing files
      */
     public void collateArtifacts(@NotNull String release, BranchType mainOrMaster) throws IOException {
@@ -139,11 +145,12 @@ public class DependencyMojoCommons {
 
         SemanticVersion releaseVersion = SemanticVersion.parse(release);
 
-        commons.getLog().info("Release start: "+commons.getReleaseBranch()+" Release version: " + releaseVersion.toString());
+        commons.getLog().info(
+                "Release start: " + commons.getReleaseBranch() + " Release version: " + releaseVersion.toString());
 
-        String releaseBranch = commons.getReleaseBranch()+"/" + releaseVersion.toString();
+        String releaseBranch = commons.getReleaseBranch() + "/" + releaseVersion.toString();
 
-        String releaseTag = commons.getReleaseBranch()+"-" + releaseVersion.toString();
+        String releaseTag = commons.getReleaseBranch() + "-" + releaseVersion.toString();
 
         String baseDir = commons.getProject().getBasedir().getAbsolutePath();
 
@@ -243,8 +250,12 @@ public class DependencyMojoCommons {
                         commons.getLog().info("Commit: " + commitMessage);
 
                         List<String[]> properties = Arrays.asList(
-                                new String[] { "MUTATIO_"+collateType.toString().toUpperCase()+"_UPDATED_DEPENDENCIES", artifacts },
-                                new String[] { "MUTATIO_"+collateType.toString().toUpperCase()+"_DEPENDENCIES_UPDATED", "true" });
+                                new String[] {
+                                        "MUTATIO_" + collateType.toString().toUpperCase() + "_UPDATED_DEPENDENCIES",
+                                        artifacts },
+                                new String[] {
+                                        "MUTATIO_" + collateType.toString().toUpperCase() + "_DEPENDENCIES_UPDATED",
+                                        "true" });
                         cmd.setBuildProperties(properties);
 
                     } catch (Exception e) {
@@ -259,11 +270,14 @@ public class DependencyMojoCommons {
     }
 
     /**
-     * Updates dependencies in the release branch based on the provided release version and branch type.
+     * Updates dependencies in the release branch based on the provided release
+     * version and branch type.
      *
-     * @param release        the release version to update dependencies for
-     * @param mainOrMaster   the branch type (main or master) to update dependencies in
-     * @param artifacts      a semicolon-separated string of artifact coordinates to update
+     * @param release      the release version to update dependencies for
+     * @param mainOrMaster the branch type (main or master) to update dependencies
+     *                     in
+     * @param artifacts    a semicolon-separated string of artifact coordinates to
+     *                     update
      * @throws IOException if an I/O error occurs while reading or writing files
      */
     public void updateDependencies(@NotNull String release, BranchType mainOrMaster, String artifacts)
@@ -272,7 +286,7 @@ public class DependencyMojoCommons {
                 "updateDependencies called with release: " + release + ", mainOrMaster: " + mainOrMaster.getValue());
 
         SemanticVersion releaseVersion = SemanticVersion.parse(release);
-        String releaseBranch = commons.getReleaseBranch()+"/" + releaseVersion.toString();
+        String releaseBranch = commons.getReleaseBranch() + "/" + releaseVersion.toString();
 
         commons.getLog().info("Switching to branch: " + releaseBranch);
         GitConfiguration gitConfiguration = new GitConfiguration()
@@ -394,9 +408,21 @@ public class DependencyMojoCommons {
         }
 
         if (modified) {
+            commons.getLog().info("Writing updated POM to " + pomFile.getAbsolutePath());
+            long lastModifiedBefore = pomFile.lastModified(); // Get the last modified time before writing
             try (FileWriter writer = new FileWriter(pomFile)) {
                 new MavenXpp3Writer().write(writer, model);
             }
+            long lastModifiedAfter = pomFile.lastModified(); // Get the last modified time after writing
+
+            // Confirm that the file was actually saved
+            if (lastModifiedAfter > lastModifiedBefore) {
+                commons.getLog().info("Successfully updated POM file: " + pomFile.getAbsolutePath());
+            } else {
+                commons.getLog().warn("Failed to update POM file: " + pomFile.getAbsolutePath());
+            }
+        } else {
+            commons.getLog().info("No dependencies to update in " + pomFile.getAbsolutePath());
         }
 
         // Recurse into submodules
