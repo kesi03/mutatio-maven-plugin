@@ -15,6 +15,7 @@ import org.apache.maven.project.ProjectBuilder;
 import org.apache.maven.settings.Settings;
 
 import com.mockholm.config.BranchType;
+import com.mockholm.config.CollateType;
 import com.mockholm.models.MojoCommons;
 import com.mockholm.mojos.commons.DependencyMojoCommons;
 
@@ -88,10 +89,28 @@ public class UpdateDependenciesMojo extends AbstractMojo {
     @Parameter(property = "releaseBranch", name ="releaseBranch", defaultValue = "release")
     private String releaseBranch;
 
+    /**
+     * The type of collation to be performed.
+     * Default is "RELEASE".
+     * Options could include "RELEASE", "DEV"
+     */
+    @Parameter(property = "collateType", name="collateType", defaultValue = "RELEASE")
+    private String collateType;
+
 
     @Override
     public void execute() throws MojoExecutionException, MojoFailureException {
         getLog().info("Updating dependencies...");
+        getLog().info("Release branch: " + releaseBranch);
+        getLog().info("Release version: " + release);
+        getLog().info("Collate type: " + collateType);
+        getLog().info("Repo identity: " + repoIdentity);
+        getLog().info("Artifacts: ");
+        for (String artifact : artifacts.split(",")) {
+            getLog().info(" - " + artifact.trim());
+        }
+        
+        getLog().info("------------------------------------");
 
         // Initialize MojoCommons
        MojoCommons commons = new MojoCommons()
@@ -107,8 +126,10 @@ public class UpdateDependenciesMojo extends AbstractMojo {
         DependencyMojoCommons dependencyMojo = new DependencyMojoCommons(commons);
         
         try {
+            String branchName = dependencyMojo.getReleaseBranchName(releaseBranch);
+            getLog().info("Branch: " + branchName);
             // Call the method to update dependencies
-           dependencyMojo.updateDependencies(release, mainOrMaster, artifacts);
+           dependencyMojo.updateDependencies(branchName,artifacts, CollateType(collateType));
 
         } catch (IOException e) {
             throw new MojoExecutionException("Failed to update dependencies", e);

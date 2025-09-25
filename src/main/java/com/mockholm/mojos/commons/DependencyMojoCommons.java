@@ -25,6 +25,7 @@ import org.jetbrains.annotations.NotNull;
 import com.mockholm.commands.GitCommand;
 import com.mockholm.commands.ShellCommand;
 import com.mockholm.config.BranchType;
+import com.mockholm.config.CollateType;
 import com.mockholm.config.GitConfiguration;
 import com.mockholm.models.ConventionalCommit;
 import com.mockholm.models.MojoCommons;
@@ -48,6 +49,77 @@ public class DependencyMojoCommons {
         this.commons = commons;
     }
 
+
+    /**
+     * Returns the name of the release branch.
+     *
+     * @return the release branch name
+     */
+    public String getReleaseBranch(String release){
+       return commons.getReleaseBranch()+"/"+release;
+    }
+
+    /**
+     * Returns the name of the development branch.
+     *
+     * @return the development branch name
+     */
+    public String getDevBranch(){
+        return commons.getDevelopmentBranch();
+    }
+
+    /**
+     * Collates artifacts for a given release branch.
+     *
+     * @param branch2Collate the release branch to collate artifacts from
+     */
+    public void collateArtifacts(String branch2Collate, CollateType collateType) {
+        GitConfiguration gitConfiguration = new GitConfiguration()
+                .withServerKey(commons.getProject().getProperties().getProperty("gitProvider"))
+                .withScm(commons.getProject().getScm())
+                .withSettings(commons.getSettings());
+
+        new GitCommand(commons.getLog())
+                .changeBranch(branch2Collate, gitConfiguration)
+                .gitInfo()
+                .runShellCommands(cmd -> {
+                    try {
+                        ProjectBuildingRequest buildingRequest = commons.getSession().getProjectBuildingRequest();
+                        buildingRequest.setResolveDependencies(true);
+
+                        MavenProject rootProject = commons.getProjectBuilder()
+                                .build(new File(baseDir, "pom.xml"), buildingRequest)
+                                .getProject();
+
+                        Set<String> artifactNames = new LinkedHashSet<>();
+                        collectArtifactsRecursively(rootProject, artifactNames);
+
+                        commons.getLog().info("Artifacts in branch '" + branch2Collate + "':");
+
+                        artifactNames.forEach(a -> {
+                            commons.getLog().info(" - " + a);
+                        });
+
+                        // create a string with the artifacts
+                        String artifactsString = String.join(";", artifactNames);
+
+                        List<String[]> properties = Arrays.asList(
+                                new String[] { "MUTATIO_"+collateType.toString().toUpperCase()+"_BRANCH", branch2Collate },
+                                new String[] { "MUTATIO_"+collateType.toString().toUpperCase()+"_ARTIFACTS", artifactsString });
+                        cmd.setBuildProperties(properties);
+
+                    } catch (ProjectBuildingException e) {
+                        commons.getLog().error("Error building project: " + e.getMessage());
+                        e.printStackTrace();
+                    } catch (Exception e) {
+                        commons.getLog().error("Error collecting artifacts: " + e.getMessage());
+                        e.printStackTrace();
+                    }
+
+                }, new ShellCommand(commons.getLog()))
+                .close();
+    }
+
     /**
      * Collates artifacts for a given release version and branch type.
      *
@@ -67,7 +139,7 @@ public class DependencyMojoCommons {
 
         SemanticVersion releaseVersion = SemanticVersion.parse(release);
 
-        commons.getLog().info("Release version: " + releaseVersion.toString());
+        commons.getLog().info("Release start: "+commons.getReleaseBranch()+" Release version: " + releaseVersion.toString());
 
         String releaseBranch = commons.getReleaseBranch()+"/" + releaseVersion.toString();
 
@@ -124,6 +196,66 @@ public class DependencyMojoCommons {
                 }, new ShellCommand(commons.getLog()))
                 .close();
 
+    }
+
+    public void updateDependencies(String branch2Update, String artifacts, CollateType collateType) {
+        GitConfiguration gitConfiguration = new GitConfiguration()
+                .withServerKey(commons.getProject().getProperties().getProperty("gitProvider"))
+                .withScm(commons.getProject().getScm())
+                .withSettings(commons.getSettings());
+
+        AtomicReference<String> commitMessage = new AtomicReference<>("");
+
+        new GitCommand(commons.getLog())
+                .changeBranch(branch2Update, gitConfiguration)
+                .gitInfo()
+                .runShellCommands(cmd -> {
+                    try {
+                        ProjectBuildingRequest buildingRequest = commons.getSession().getProjectBuildingRequest();
+                        buildingRequest.setResolveDependencies(true);
+
+                        MavenProject rootProject = commons.getProjectBuilder()
+                                .build(new File(commons.getProject().getBasedir(), "pom.xml"), buildingRequest)
+                                .getProject();
+
+                        Set<String> artifactKeys = Arrays.stream(artifacts.split(";"))
+                                .map(String::trim)
+                                .filter(s -> !s.isEmpty())
+                                .collect(Collectors.toCollection(LinkedHashSet::new));
+                        updateDependenciesRecursively(rootProject, artifactKeys);
+
+                        commons.getLog().info("Updated dependencies in branch '" + branch2Update + "'");
+
+                        String description = artifactKeys.stream()
+                                .map(key -> "Updated dependency: " + key)
+                                .collect(Collectors.joining("\n"));
+
+                        ConventionalCommit commit = new ConventionalCommit.Builder()
+                                .type(BranchType.RELEASE)
+                                .scope(branch2Update)
+                                .description(description)
+                                .isBreaking(false)
+                                .body("")
+                                .footer("")
+                                .build();
+
+                        commitMessage.set(CommitUtils.format(commit));
+                        commons.getLog().info("Commit: " + commitMessage);
+
+                        List<String[]> properties = Arrays.asList(
+                                new String[] { "MUTATIO_"+collateType.toString().toUpperCase()+"_UPDATED_DEPENDENCIES", artifacts },
+                                new String[] { "MUTATIO_"+collateType.toString().toUpperCase()+"_DEPENDENCIES_UPDATED", "true" });
+                        cmd.setBuildProperties(properties);
+
+                    } catch (Exception e) {
+                        commons.getLog().error("Error updating dependencies: " + e.getMessage());
+                        e.printStackTrace();
+                    }
+                }, new ShellCommand(commons.getLog()))
+                .addAllChanges()
+                .commit(commitMessage.get())
+                .push(gitConfiguration)
+                .close();
     }
 
     /**

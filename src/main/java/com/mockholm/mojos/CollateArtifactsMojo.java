@@ -14,6 +14,7 @@ import org.apache.maven.project.ProjectBuilder;
 import org.apache.maven.settings.Settings;
 
 import com.mockholm.config.BranchType;
+import com.mockholm.config.CollateType;
 import com.mockholm.models.MojoCommons;
 import com.mockholm.mojos.commons.DependencyMojoCommons;
 
@@ -78,7 +79,15 @@ public class CollateArtifactsMojo extends AbstractMojo{
     private String releaseBranch;
 
     /**
-     * Executes the Mojo to start the dependency branch creation process.
+     * The type of collation to be performed.
+     * Default is "RELEASE".
+     * Options could include "RELEASE", "DEV"
+     */
+    @Parameter(property = "collateType", name="collateType", defaultValue = "RELEASE")
+    private String collateType;
+
+    /**
+     * Executes the Mojo to start the dependency collation process.
      * This method initializes the MojoCommons context and calls the DependencyMojoCommons
      * to handle the logic of collating artifacts for the release branch.
      *
@@ -87,7 +96,11 @@ public class CollateArtifactsMojo extends AbstractMojo{
      */
     @Override
     public void execute() throws MojoExecutionException, MojoFailureException {
-        getLog().info("Starting dependency branch creation...");
+        getLog().info("Starting dependency collation...");
+        getLog().info("Release branch: " + releaseBranch);
+        getLog().info("Release version: " + release);
+        getLog().info("Main or Master branch: " + mainOrMaster);
+        getLog().info("------------------------------------");
 
         // Create a MojoCommons instance to encapsulate the context
         MojoCommons commons = new MojoCommons()
@@ -103,8 +116,10 @@ public class CollateArtifactsMojo extends AbstractMojo{
         DependencyMojoCommons dependencyMojo = new DependencyMojoCommons(commons);
 
         try {
+            String branchName = dependencyMojo.getReleaseBranchName(releaseBranch);
+            getLog().info("Branch: " + branchName);
             // Start the dependency process with the provided parameters
-            dependencyMojo.collateArtifacts(release, mainOrMaster);
+            dependencyMojo.collateArtifacts(branchName, CollateType(collateType));
         } catch (Exception e) {
             throw new MojoExecutionException("Error starting dependency branch", e);
         }
