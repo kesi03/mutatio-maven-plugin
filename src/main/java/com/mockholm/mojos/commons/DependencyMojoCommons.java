@@ -369,6 +369,123 @@ public class DependencyMojoCommons {
     }
 
     /**
+     * Changes the dependencies in the specified model based on the provided version
+     * map.
+     * 
+     * @param pomFile                the POM file to be updated
+     * @param model                  the Maven model containing the dependencies
+     * @param artifactVersionMap     a map of artifact keys to their new versions
+     * @param isDependencyManagement flag indicating if the update is for dependency
+     *                               management
+     * @return true if any dependencies were modified, false otherwise
+     */
+    private boolean changeDependencies(File pomFile, Model model, Map<String, String> artifactVersionMap,
+            boolean isDependencyManagement) {
+        boolean modified = false;
+
+        if (isDependencyManagement && model.getDependencyManagement() == null) {
+            commons.getLog().info("No dependency management section found.");
+            return false;
+        }
+
+        List<Dependency> dependencies = isDependencyManagement ? model.getDependencyManagement().getDependencies()
+                : model.getDependencies();
+        commons.getLog().info(isDependencyManagement ? "Processing dependency management section."
+                : "Processing project dependencies.");
+
+        for (Dependency dep : dependencies) {
+            if (updateDependencyIfNeeded(dep, artifactVersionMap, isDependencyManagement)) {
+                modified = true;
+            }
+        }
+
+        if (modified) {
+            modified = writeUpdatedPom(pomFile, model);
+        } else {
+            commons.getLog().info("No dependencies to update in " + pomFile.getAbsolutePath());
+        }
+
+        return modified;
+    }
+
+    /**
+     * Updates the version of a dependency if it exists in the artifactVersionMap.
+     * 
+     * @param dep the dependency to update
+     * @param artifactVersionMap the map of artifact keys to versions
+     * @param isDependencyManagement whether this is for dependency management
+     * @return true if the dependency was updated, false otherwise
+     */
+    private boolean updateDependencyIfNeeded(Dependency dep, Map<String, String> artifactVersionMap, boolean isDependencyManagement) {
+        String key = dep.getGroupId() + ":" + dep.getArtifactId();
+        if (artifactVersionMap.containsKey(key)) {
+            String newVersion = artifactVersionMap.get(key);
+            dep.setVersion(newVersion);
+            commons.getLog().info(
+                    (isDependencyManagement ? "Updated dependency management dependency: " : "Updated dependency: ")
+                            + key + " to version " + newVersion);
+            return true;
+        } else {
+            commons.getLog().info((isDependencyManagement ? "No dependency management update found for dependency: "
+                    : "No update found for dependency: ") + key);
+            return false;
+        }
+    }
+
+    /**
+     * Writes the updated model to the specified POM file and checks if the file was
+     * successfully updated.
+     * 
+     * @param pomFile the POM file to be written
+     * @param model   the Maven model to be written to the POM file
+     * @return true if the POM file was successfully updated, false otherwise
+     */
+    private boolean writeUpdatedPom(File pomFile, Model model) {
+        commons.getLog().info("Writing updated POM to " + pomFile.getAbsolutePath());
+        long lastModifiedBefore = pomFile.lastModified(); // Get the last modified time before writing
+        try (FileWriter writer = new FileWriter(pomFile)) {
+            new MavenXpp3Writer().write(writer, model);
+        }
+        long lastModifiedAfter = pomFile.lastModified(); // Get the last modified time after writing
+
+        // Confirm that the file was actually saved
+        if (lastModifiedAfter > lastModifiedBefore) {
+            commons.getLog().info("Successfully updated POM file: " + pomFile.getAbsolutePath());
+            return true;
+        } else {
+            commons.getLog().warn("Failed to update POM file: " + pomFile.getAbsolutePath());
+            return false;
+        }
+    }
+
+    /**
+     * Updates the project dependencies in the specified POM file based on the
+     * provided version map.
+     * 
+     * @param pomFile            the POM file to be updated
+     * @param model              the Maven model containing the dependencies
+     * @param artifactVersionMap a map of artifact keys to their new versions
+     * @return true if any dependencies were modified, false otherwise
+     */
+    private boolean updateProjectDependencies(File pomFile, Model model, Map<String, String> artifactVersionMap) {
+        return changeDependencies(pomFile, model, artifactVersionMap, false);
+    }
+
+    /**
+     * Updates the dependencies in the dependency management section of the
+     * specified POM file based on the provided version map.
+     * 
+     * @param pomFile            the POM file to be updated
+     * @param model              the Maven model containing the dependencies
+     * @param artifactVersionMap a map of artifact keys to their new versions
+     * @return true if any dependencies were modified, false otherwise
+     */
+    private boolean updateDependencyManagementDependencies(File pomFile, Model model,
+            Map<String, String> artifactVersionMap) {
+        return changeDependencies(pomFile, model, artifactVersionMap, true);
+    }
+
+    /**
      * Recursively updates the versions of dependencies in the given Maven project
      * and its submodules
      * based on a provided set of artifact coordinates in the format
@@ -393,53 +510,8 @@ public class DependencyMojoCommons {
                         (v1, v2) -> v1, // keep first if duplicates
                         LinkedHashMap::new));
 
-        boolean modified = false;
-
-        for (Dependency dep : model.getDependencies()) {
-            String key = dep.getGroupId() + ":" + dep.getArtifactId();
-            if (artifactVersionMap.containsKey(key)) {
-                String newVersion = artifactVersionMap.get(key);
-
-                dep.setVersion(newVersion);
-                commons.getLog().info("Updated dependency: " + key +
-                        " to version " + newVersion + " in " + pomFile.getAbsolutePath());
-                modified = true;
-            } else {
-                commons.getLog().info("No update found for dependency: " + key);
-            }
-        }
-
-        for (Dependency dep : model.getDependencyManagement().getDependencies()) {
-            String key = dep.getGroupId() + ":" + dep.getArtifactId();
-            if (artifactVersionMap.containsKey(key)) {
-                String newVersion = artifactVersionMap.get(key);
-
-                dep.setVersion(newVersion);
-                commons.getLog().info("Updated dependency managment dependency: " + key +
-                        " to version " + newVersion + " in " + pomFile.getAbsolutePath());
-                modified = true;
-            } else {
-                commons.getLog().info("No update found for dependency: " + key);
-            }
-        }
-
-        if (modified) {
-            commons.getLog().info("Writing updated POM to " + pomFile.getAbsolutePath());
-            long lastModifiedBefore = pomFile.lastModified(); // Get the last modified time before writing
-            try (FileWriter writer = new FileWriter(pomFile)) {
-                new MavenXpp3Writer().write(writer, model);
-            }
-            long lastModifiedAfter = pomFile.lastModified(); // Get the last modified time after writing
-
-            // Confirm that the file was actually saved
-            if (lastModifiedAfter > lastModifiedBefore) {
-                commons.getLog().info("Successfully updated POM file: " + pomFile.getAbsolutePath());
-            } else {
-                commons.getLog().warn("Failed to update POM file: " + pomFile.getAbsolutePath());
-            }
-        } else {
-            commons.getLog().info("No dependencies to update in " + pomFile.getAbsolutePath());
-        }
+        updateProjectDependencies(pomFile, model, artifactVersionMap);
+        updateDependencyManagementDependencies(pomFile, model, artifactVersionMap);
 
         // Recurse into submodules
         for (String module : project.getModules()) {
