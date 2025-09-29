@@ -411,12 +411,13 @@ public class DependencyMojoCommons {
     /**
      * Updates the version of a dependency if it exists in the artifactVersionMap.
      * 
-     * @param dep the dependency to update
-     * @param artifactVersionMap the map of artifact keys to versions
+     * @param dep                    the dependency to update
+     * @param artifactVersionMap     the map of artifact keys to versions
      * @param isDependencyManagement whether this is for dependency management
      * @return true if the dependency was updated, false otherwise
      */
-    private boolean updateDependencyIfNeeded(Dependency dep, Map<String, String> artifactVersionMap, boolean isDependencyManagement) {
+    private boolean updateDependencyIfNeeded(Dependency dep, Map<String, String> artifactVersionMap,
+            boolean isDependencyManagement) {
         String key = dep.getGroupId() + ":" + dep.getArtifactId();
         if (artifactVersionMap.containsKey(key)) {
             String newVersion = artifactVersionMap.get(key);
@@ -445,6 +446,9 @@ public class DependencyMojoCommons {
         long lastModifiedBefore = pomFile.lastModified(); // Get the last modified time before writing
         try (FileWriter writer = new FileWriter(pomFile)) {
             new MavenXpp3Writer().write(writer, model);
+        } catch (IOException e) {
+            commons.getLog().error("IOException occurred while writing POM file: " + e.getMessage(), e);
+            return false; // Return false if an exception occurs
         }
         long lastModifiedAfter = pomFile.lastModified(); // Get the last modified time after writing
 
