@@ -396,14 +396,16 @@ public class DependencyMojoCommons {
         boolean modified = false;
         for (Dependency dep : model.getDependencies()) {
             String key = dep.getGroupId() + ":" + dep.getArtifactId();
+            commons.getLog().info("Checking dependency: " + key + " Current version: " + dep.getVersion());
             if (artifactVersionMap.containsKey(key)) {
                 String newVersion = artifactVersionMap.get(key);
-                if (!newVersion.equals(dep.getVersion())) {
-                    dep.setVersion(newVersion);
-                    commons.getLog().info("Updated dependency: " + key +
-                            " to version " + newVersion + " in " + pomFile.getAbsolutePath());
-                    modified = true;
-                }
+
+                dep.setVersion(newVersion);
+                commons.getLog().info("Updated dependency: " + key +
+                        " to version " + newVersion + " in " + pomFile.getAbsolutePath());
+                modified = true;
+            } else {
+                commons.getLog().info("No update found for dependency: " + key);
             }
         }
 
