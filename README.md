@@ -27,9 +27,20 @@ Add a scm:
     <url>https://github.com/kesi03/mutatio-maven</url>
   </scm>
 ```
+### DevOps platforms
+#### Team City
+#### SSH
+In the project your build will be created:
+1. go to 'Security -> SSH' and create a new ssh key.
+2. Press 'Copy the public key' which copies the key to clipboard.
+3. Open Bitbucket project go to 'repository settings -> access keys' ***add key***
+4. Paste the key which is in the clipboard to the field key.
+5. Permissions 'Repository write'
+6. Expiry choose 'do not expire' or Expire automatically
+Days until expiry* 90 
+7. Save
 ---
 ## SSH
-***STILL UNDER DEVELOPMENT***
 ## Setting up SSH credentials for GitHub
 
 ---
