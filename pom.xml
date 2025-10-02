@@ -36,13 +36,13 @@
         </license>
     </licenses>
     <properties>
-        <maven.compiler.source>11</maven.compiler.source>
-        <maven.compiler.target>11</maven.compiler.target>
+        <maven.compiler.source>17</maven.compiler.source>
+        <maven.compiler.target>17</maven.compiler.target>
         <maven-plugin-api.version>3.6.3</maven-plugin-api.version>
         <maven-plugin-annotations.version>3.6.0</maven-plugin-annotations.version>
         <maven-project.version>2.2.1</maven-project.version>
         <maven-model.version>3.9.4</maven-model.version>
-        <jgit.version>6.9.0.202403050737-r</jgit.version>
+        <jgit.version>7.3.0.202506031305-r</jgit.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
     </properties>
@@ -133,6 +133,11 @@
             <artifactId>org.eclipse.jgit.ssh.jsch</artifactId>
             <version>${jgit.version}</version>
         </dependency>
+        <dependency>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-site-plugin</artifactId>
+        <version>3.9.1</version> <!-- Use the latest version -->
+    </dependency>
         <dependency>
         <groupId>com.github.mwiede</groupId>
         <artifactId>jsch</artifactId>
